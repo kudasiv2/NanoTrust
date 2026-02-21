@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>NanoTrust - Decentralized Yield Infrastructure</title>
-    <meta name="description" content="Powered by Venus Protocol Integration">
+    <title>NanoTether - Decentralized Yield Infrastructure</title>
+    <meta name="description" content="Powered by Venus Protocol">
 
     <link rel="icon" type="image/svg+xml" href="https://nanotether.com/images/logo.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="https://nanotether.com/images/logo.png">
@@ -14,8 +14,8 @@
 
     <link rel="manifest" href="/manifest.json">
 
-    <meta property="og:title" content="NanoTrust">
-    <meta property="og:description" content="Decentralized Yield Infrastructure">
+    <meta property="og:title" content="NanoTether">
+    <meta property="og:description" content="Decentralized Yield Infrastructure Powered by Venus Protocol">
     <meta property="og:image" content="https://nanotether.com/images/logo.png">
     <meta property="og:type" content="website">
     
@@ -47,7 +47,7 @@
                 </button>
                 <a href="#" class="nav__logo" onclick="showSection('home'); return false;">
                     <div class="logo-icon">⚡</div>
-                    <span class="logo-text">NanoTrust</span>
+                    <span class="logo-text">NanoTether</span>
                 </a>
             </div>
 
@@ -192,7 +192,7 @@
                                     Platform Features
                                 </div>
                                 <ul class="info-list">
-                                    <li>Minimum investment: <strong>1 USDT</strong></li>
+                                    <li>Minimum investment: <strong>10 USDT</strong></li>
                                     <li>10% management fee on deposits</li>
                                     <li>60-day lock period (50% early withdrawal fee)</li>
                                     <li>5-level referral system (5%, 3%, 2%, 1%, 0.5%)</li>
@@ -365,13 +365,13 @@
                                 <div class="invest-form__icon"><i class="fas fa-rocket"></i></div>
                                 <div>
                                     <h3>New Investment</h3>
-                                    <p style="font-size: 0.875rem; color: var(--text-muted);">Minimum 1 USDT</p>
+                                    <p style="font-size: 0.875rem; color: var(--text-muted);">Minimum 10 USDT</p>
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Investment Amount (USDT)</label>
-                                <input type="number" class="form-input" id="investAmount" placeholder="Enter amount" min="1" step="0.01" value="100">
+                                <input type="number" class="form-input" id="investAmount" placeholder="Enter amount" min="10" step="1" value="10">
                                 <div class="form-hint">Wallet Balance: <span id="usdtBalance">0.00</span> USDT</div>
                             </div>
 
@@ -415,7 +415,7 @@
                                     <div style="width: 32px; height: 32px; background: var(--green-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; flex-shrink: 0;">1</div>
                                     <div>
                                         <div style="font-weight: 600; margin-bottom: 0.25rem;">Deposit USDT</div>
-                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Minimum 1 USDT to start.</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Minimum 10 USDT to start.</div>
                                     </div>
                                 </div>
 
@@ -836,12 +836,12 @@
                 <div class="faq-list">
                     <div class="faq-item">
                         <div class="faq-question" onclick="toggleFaq(this)">
-                            <span class="faq-question__text">What is NanoTrust and how does it work?</span>
+                            <span class="faq-question__text">What is NanoTether and how does it work?</span>
                             <span class="faq-icon"><i class="fas fa-chevron-down"></i></span>
                         </div>
                         <div class="faq-answer">
                             <div class="faq-answer__content">
-                                NanoTrust is a decentralized yield infrastructure powered by Venus Protocol. Users deposit USDT which is then supplied to Venus Protocol to generate yields. Investors earn 0.3% base daily ROI, with additional boosts based on their leadership rank (up to +1% for Diamond Rank = 1.3% daily). The platform operates fully on-chain with transparent smart contracts audited by OpenZeppelin standards.
+                                NanoTether is a decentralized yield infrastructure powered by Venus Protocol. Users deposit USDT which is then supplied to Venus Protocol to generate yields. Investors earn 0.3% base daily ROI, with additional boosts based on their leadership rank (up to +1% for Diamond Rank = 1.3% daily). The platform operates fully on-chain with transparent smart contracts audited by OpenZeppelin standards.
                             </div>
                         </div>
                     </div>
@@ -853,7 +853,7 @@
                         </div>
                         <div class="faq-answer">
                             <div class="faq-answer__content">
-                                The minimum investment amount is <strong>1 USDT</strong>. There is no maximum limit. A 10% management fee is deducted from each deposit (sent to the management wallet), with the remaining 90% being deposited to Venus Protocol to start generating yields immediately.
+                                The minimum investment amount is <strong>10 USDT</strong>. There is no maximum limit. A 10% management fee is deducted from each deposit (sent to the management wallet), with the remaining 90% being deposited to Venus Protocol to start generating yields immediately.
                             </div>
                         </div>
                     </div>
@@ -877,7 +877,7 @@
                         </div>
                         <div class="faq-answer">
                             <div class="faq-answer__content">
-                                There are 5 leadership ranks (Bronze, Silver, Gold, Platinum, Diamond) that provide ROI boosts from 10% to 100%. To achieve ranks, you need:<br><br>
+                                There are 5 leadership ranks (Bronze, Silver, Gold, Platinum, Diamond) that provide ROI boosts from 0.1% to 1%. To achieve ranks, you need:<br><br>
                                 • <strong>Bronze:</strong> 5,000 USDT team volume + 50 qualified directs + 50 USDT personal<br>
                                 • <strong>Silver:</strong> 15,000 USDT team volume + 130 qualified directs + 50 USDT personal<br>
                                 • <strong>Gold:</strong> 30,000 USDT team volume + 300 qualified directs + 50 USDT personal<br>
@@ -901,7 +901,7 @@
                                 • <strong>Level 3:</strong> 2%<br>
                                 • <strong>Level 4:</strong> 1%<br>
                                 • <strong>Level 5:</strong> 0.5%<br><br>
-                                To unlock higher levels, you must meet qualification criteria including minimum deposits and number of qualified directs. Commissions are paid instantly to your pending referral balance when your downline makes a deposit.
+                                To unlock higher levels, you must meet qualification criteria including minimum deposits and number of qualified directs. Commissions are paid instantly to your referral balance when your downline makes a deposit.
                             </div>
                         </div>
                     </div>
@@ -931,11 +931,10 @@
                         </div>
                         <div class="faq-answer">
                             <div class="faq-answer__content">
-                                Yes, NanoTrust uses OpenZeppelin's battle-tested contracts including ReentrancyGuard and SafeERC20. The contract includes security features like:<br>
+                                Yes, NanoTether uses OpenZeppelin's battle-tested contracts including ReentrancyGuard and SafeERC20. The contract includes security features like:<br>
                                 • Reentrancy protection on all state-changing functions<br>
                                 • SafeERC20 for secure token transfers<br>
-                                • Only EOA (Externally Owned Account) restriction for investments<br>
-                                • Owner-only functions for emergency Venus interactions<br><br>
+                                • Only EOA (Externally Owned Account) restriction for investments<br><br>
                                 The contract is verified on BSCScan. However, as with any DeFi protocol, users should understand the risks involved and only invest what they can afford to lose.<br><br>
                                 <strong>Contract Address:</strong> 0x0d00583f6E99e1370e2DB18a7239C2a18eb7065F
                             </div>
@@ -971,7 +970,7 @@
             <div class="footer__content">
                 <div class="nav__logo" style="margin-bottom: 0.5rem;">
                     <div class="logo-icon">⚡</div>
-                    <span class="logo-text">NanoTrust</span>
+                    <span class="logo-text">NanoTether</span>
                 </div>
                 <p style="color: var(--text-muted); font-size: 0.875rem;">Secure, Transparent and Fully On-Chain DeFi Platform Powered by Venus Protocol</p>
                 <div class="footer__social">
@@ -1022,7 +1021,7 @@
                     </div>
                     <div class="tx-row">
                         <span class="tx-label">Withdrawal Fee:</span>
-                        <span id="withdrawFee" style="color: var(--red);">0.00 USDT (50%)</span>
+                        <span id="withdrawFee" style="color: var(--red);">0.00 USDT (-50%)</span>
                     </div>
                     <div class="tx-row">
                         <span class="tx-label">You Receive:</span>
