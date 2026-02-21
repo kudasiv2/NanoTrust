@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NanoTrust - On-Chain Yield Infrastructure</title>
+    <meta name="description" content="NanoTrust - Powered by Venus Protocol Integration">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Web3 -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <!-- Axios for API -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="bg-grid"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="nav__toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="#" class="nav__logo" onclick="showSection('home'); return false;">
+                    <div class="logo-icon">⚡</div>
+                    <span class="logo-text">NanoTrust</span>
+                </a>
+            </div>
+
+            <div class="nav__menu">
+                <ul class="nav__links">
+                    <li><a class="nav__link active" onclick="showSection('home')">Home</a></li>
+                    <li><a class="nav__link" onclick="showSection('dashboard')">Dashboard</a></li>
+                    <li><a class="nav__link" onclick="showSection('invest')">Invest</a></li>
+                    <li><a class="nav__link" onclick="showSection('referral')">Referral</a></li>
+                    <li><a class="nav__link" onclick="showSection('leadership')">Leadership</a></li>
+                    <li><a class="nav__link" onclick="showSection('faq')">FAQ</a></li>
+                </ul>
+            </div>
+
+            <button class="wallet-btn" id="connectWalletBtn">
+                <i class="fas fa-wallet"></i>
+                <span>Connect Wallet</span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar__section">
+            <div class="sidebar__title">Main Menu</div>
+            <a class="sidebar__link active" onclick="showSection('home')">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a class="sidebar__link" onclick="showSection('dashboard')">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </a>
+            <a class="sidebar__link" onclick="showSection('invest')">
+                <i class="fas fa-rocket"></i> Invest
+            </a>
+        </div>
+        
+        <div class="sidebar__section">
+            <div class="sidebar__title">Network</div>
+            <a class="sidebar__link" onclick="showSection('referral')">
+                <i class="fas fa-users"></i> Referral
+            </a>
+            <a class="sidebar__link" onclick="showSection('leadership')">
+                <i class="fas fa-trophy"></i> Leadership
+            </a>
+        </div>
+
+        <div class="sidebar__section">
+            <div class="sidebar__title">Info</div>
+            <a class="sidebar__link" onclick="showSection('faq')">
+                <i class="fas fa-question-circle"></i> FAQ
+            </a>
+        </div>
+
+        <div class="sidebar__section" style="margin-top: 2rem; padding-top: 1rem; border-top: var(--glass-border);">
+            <div class="contract-badge">
+                <i class="fas fa-shield-alt"></i>
+                <span>Contract:</span>
+                <a href="https://bscscan.com/address/0x0d00583f6E99e1370e2DB18a7239C2a18eb7065F" target="_blank">
+                    0x0d...065F
+                </a>
+                <i class="fas fa-external-link-alt" style="font-size: 0.625rem;"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a class="mobile-menu__link active" onclick="showSection('home'); toggleMobileMenu();">
+            <i class="fas fa-home"></i> Home
+        </a>
+        <a class="mobile-menu__link" onclick="showSection('dashboard'); toggleMobileMenu();">
+            <i class="fas fa-chart-pie"></i> Dashboard
+        </a>
+        <a class="mobile-menu__link" onclick="showSection('invest'); toggleMobileMenu();">
+            <i class="fas fa-rocket"></i> Invest
+        </a>
+        <a class="mobile-menu__link" onclick="showSection('referral'); toggleMobileMenu();">
+            <i class="fas fa-users"></i> Referral
+        </a>
+        <a class="mobile-menu__link" onclick="showSection('leadership'); toggleMobileMenu();">
+            <i class="fas fa-trophy"></i> Leadership
+        </a>
+        <a class="mobile-menu__link" onclick="showSection('faq'); toggleMobileMenu();">
+            <i class="fas fa-question-circle"></i> FAQ
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Home Section -->
+        <section class="section active" id="home">
+            <div class="hero">
+                <div class="container">
+                    <div class="hero__grid">
+                        <div class="hero__content">
+                            <div class="hero__badge">
+                                <i class="fas fa-shield-alt"></i>
+                                Audited by OpenZeppelin
+                                </span>
+                            </div>
+                            <h1 class="hero__title">
+                                Decentralized Yield <span class="gradient-text">Infrastructure</span>
+                            </h1>
+                            <p class="hero__description">
+                                Secure, Transparent and Fully On-Chain DeFi Platform Powered by Venus Protocol
+                            </p>
+                            <div class="hero__buttons">
+                                <button class="btn btn--gold btn-lg" onclick="showSection('invest')">
+                                    <i class="fas fa-rocket"></i>
+                                    Start Investing
+                                </button>
+                                <button class="btn btn--secondary btn-lg" onclick="showSection('faq')">
+                                    <i class="fas fa-book"></i>
+                                    How It Works
+                                </button>
+                            </div>
+                            
+                            <div class="contract-badge" style="margin-top: 1.5rem;">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Venus Protocol:</span>
+                                <a href="https://bscscan.com/address/0xfD5840Cd36d94D7229439859C0112a4185BC0255#asset-multichain" target="_blank" style="color: var(--gold);">
+                                    0xfD58...0255
+                                </a>
+                                <i class="fas fa-external-link-alt" style="font-size: 0.625rem;"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="hero__stats">
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-card__icon"><i class="fas fa-lock"></i></div>
+                                    <div class="stat-card__value" id="statTVL">
+                                        <span class="skeleton" style="display: inline-block; width: 120px; height: 40px;"></span>
+                                    </div>
+                                    <div class="stat-card__label">Total Value Locked</div>
+                                </div>
+                            </div>
+
+                            <div class="info-card">
+                                <div class="info-card__title">
+                                    <i class="fas fa-info-circle" style="color: var(--green-accent);"></i>
+                                    Platform Features
+                                </div>
+                                <ul class="info-list">
+                                    <li>Minimum investment: <strong>1 USDT</strong></li>
+                                    <li>10% management fee on deposits</li>
+                                    <li>60-day lock period (50% early withdrawal fee)</li>
+                                    <li>5-level referral system (5%, 3%, 2%, 1%, 0.5%)</li>
+                                    <li>5 leadership ranks with up to +1% ROI boost</li>
+                                    <li>Funds secured in Venus Protocol</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section class="section" id="dashboard">
+            <div class="container">
+                <div class="section__header">
+                    <h2 class="section__title gradient-text">Dashboard</h2>
+                    <p class="section__subtitle">Track Your Investments, Earnings and Rank Progress</p>
+                </div>
+
+                <div class="alert alert--warning" id="dashboardWalletAlert" style="display: flex;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Please connect your wallet to view your dashboard</span>
+                </div>
+
+                <div id="dashboardContent" style="display: none;">
+                    <!-- Profile Header -->
+                    <div class="dashboard-header">
+                        <div class="dashboard-profile">
+                            <div class="dashboard-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="dashboard-info">
+                                <h3 id="dashUserName">Investor</h3>
+                                <div class="dashboard-address" id="dashAddress">0x00...0000</div>
+                                <div class="rank-badge" id="dashRank"><i class="fas fa-ban"></i> No Rank</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <div class="dashboard-card__icon"><i class="fas fa-wallet"></i></div>
+                            <div class="dashboard-card__value" id="dashActiveDeposit">0 USDT</div>
+                            <div class="dashboard-card__label">Active Deposit</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="dashboard-card__icon"><i class="fas fa-coins"></i></div>
+                            <div class="dashboard-card__value" id="dashTotalDeposit">0 USDT</div>
+                            <div class="dashboard-card__label">Total Deposit</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="dashboard-card__icon"><i class="fas fa-hand-holding-usd"></i></div>
+                            <div class="dashboard-card__value" id="dashPendingROI">0 USDT</div>
+                            <div class="dashboard-card__label">Pending ROI</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="dashboard-card__icon"><i class="fas fa-gift"></i></div>
+                            <div class="dashboard-card__value" id="dashPendingRef">0 USDT</div>
+                            <div class="dashboard-card__label">Pending Referral</div>
+                        </div>
+                    </div>
+
+                    <!-- Investment Card -->
+                    <div class="investment-card">
+                        <div class="investment-card__header">
+                            <h3 class="investment-card__title">
+                                <i class="fas fa-chart-pie" style="color: var(--green-accent); margin-right: 0.5rem;"></i>
+                                Investment Overview
+                            </h3>
+                            <div class="lock-info">
+                                <i class="fas fa-clock"></i>
+                                <span id="dashLockInfo">No active deposit</span>
+                            </div>
+                        </div>
+
+                        <div class="investment-stats">
+                            <div class="investment-stat">
+                                <div class="investment-stat__value" id="invActive">0 USDT</div>
+                                <div class="investment-stat__label">Active Deposit</div>
+                            </div>
+                            <div class="investment-stat">
+                                <div class="investment-stat__value" id="invAvailable">0 USDT</div>
+                                <div class="investment-stat__label">Available to Claim</div>
+                            </div>
+                            <div class="investment-stat">
+                                <div class="investment-stat__value" id="invBoost">0%</div>
+                                <div class="investment-stat__label">Rank ROI Boost</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 0.5rem;">
+                                <span style="color: var(--text-muted);">Lock Progress (60 days)</span>
+                                <span id="lockProgressText">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="lockProgressBar" style="width: 0%"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 0.25rem; color: var(--text-muted);">
+                                <span id="lockStartDate">-</span>
+                                <span id="lockEndDate">-</span>
+                            </div>
+                        </div>
+
+                        <div class="quick-actions">
+                            <button class="btn btn--primary" onclick="showSection('invest')">
+                                <i class="fas fa-plus"></i> Deposit More
+                            </button>
+                            <button class="btn btn--gold" onclick="claimROI()" id="btnClaimROI">
+                                <i class="fas fa-hand-holding-usd"></i> Claim ROI
+                            </button>
+                            <button class="btn btn--secondary" onclick="claimReferral()" id="btnClaimRef">
+                                <i class="fas fa-gift"></i> Claim Referral
+                            </button>
+                            <button class="btn btn--danger" onclick="openWithdrawModal()" id="btnWithdraw">
+                                <i class="fas fa-sign-out-alt"></i> Withdraw Capital
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Network Stats -->
+                    <div class="info-card">
+                        <div class="info-card__title">
+                            <i class="fas fa-network-wired" style="color: var(--green-accent);"></i>
+                            Your Network
+                        </div>
+                        <div class="dashboard-grid" style="margin-bottom: 0;">
+                            <div class="dashboard-card" style="background: transparent; border: none; padding: 0.75rem;">
+                                <div class="dashboard-card__value" id="dashDirects" style="font-size: 1.125rem;">0</div>
+                                <div class="dashboard-card__label">Direct Referrals</div>
+                            </div>
+                            <div class="dashboard-card" style="background: transparent; border: none; padding: 0.75rem;">
+                                <div class="dashboard-card__value" id="dashQualified" style="font-size: 1.125rem;">0</div>
+                                <div class="dashboard-card__label">Qualified Directs</div>
+                            </div>
+                            <div class="dashboard-card" style="background: transparent; border: none; padding: 0.75rem;">
+                                <div class="dashboard-card__value" id="dashTeamVolume" style="font-size: 1.125rem;">0 USDT</div>
+                                <div class="dashboard-card__label">Team Volume</div>
+                            </div>
+                            <div class="dashboard-card" style="background: transparent; border: none; padding: 0.75rem;">
+                                <div class="dashboard-card__value" id="dashTotalEarned" style="font-size: 1.125rem;">0 USDT</div>
+                                <div class="dashboard-card__label">Total Referral Earned</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Invest Section -->
+        <section class="section" id="invest">
+            <div class="container">
+                <div class="section__header">
+                    <h2 class="section__title gradient-text">Invest</h2>
+                    <p class="section__subtitle">Start Earning Daily ROI</p>
+                </div>
+
+                <div class="alert alert--warning" id="investWalletAlert" style="display: flex;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Please connect your wallet to invest</span>
+                </div>
+
+                <div id="investContent" style="display: none;">
+                    <div class="invest-grid">
+                        <div class="invest-form">
+                            <div class="invest-form__header">
+                                <div class="invest-form__icon"><i class="fas fa-rocket"></i></div>
+                                <div>
+                                    <h3>New Investment</h3>
+                                    <p style="font-size: 0.875rem; color: var(--text-muted);">Minimum 1 USDT</p>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Investment Amount (USDT)</label>
+                                <input type="number" class="form-input" id="investAmount" placeholder="Enter amount" min="1" step="0.01" value="100">
+                                <div class="form-hint">Wallet Balance: <span id="usdtBalance">0.00</span> USDT</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Referrer Address</label>
+                                <input type="text" class="form-input" id="referrerAddress" readonly>
+                                <div class="form-hint" id="refHint"></div>
+                            </div>
+
+                            <div class="calculation-preview">
+                                <div class="calc-row">
+                                    <span class="calc-label">Net Deposit:</span>
+                                    <span class="calc-value" id="calcNet">0.00 USDT</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span class="calc-label">Daily ROI:</span>
+                                    <span class="calc-value" id="calcDaily">0.0000 USDT</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span class="calc-label">60 Days Projection:</span>
+                                    <span class="calc-value highlight" id="calc60Days">0.00 USDT</span>
+                                </div>
+                            </div>
+
+                            <button class="btn btn--gold" style="width: 100%;" onclick="submitInvestment()" id="btnInvest">
+                                <i class="fas fa-rocket"></i> Confirm Investment
+                            </button>
+                        </div>
+
+                        <div class="invest-form">
+                            <div class="invest-form__header">
+                                <div class="invest-form__icon"><i class="fas fa-info-circle"></i></div>
+                                <div>
+                                    <h3>Investment Details</h3>
+                                    <p style="font-size: 0.875rem; color: var(--text-muted);">How it works</p>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1rem;">
+                                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: rgba(124, 179, 66, 0.05); border-radius: var(--radius-lg); border-left: 3px solid var(--green-accent);">
+                                    <div style="width: 32px; height: 32px; background: var(--green-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; flex-shrink: 0;">1</div>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">Deposit USDT</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Minimum 1 USDT to start.</div>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: rgba(124, 179, 66, 0.05); border-radius: var(--radius-lg); border-left: 3px solid var(--green-accent);">
+                                    <div style="width: 32px; height: 32px; background: var(--green-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; flex-shrink: 0;">2</div>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">Venus Protocol</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Your deposit is supplied to Venus Protocol for yield generation.</div>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: rgba(124, 179, 66, 0.05); border-radius: var(--radius-lg); border-left: 3px solid var(--green-accent);">
+                                    <div style="width: 32px; height: 32px; background: var(--green-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; flex-shrink: 0;">3</div>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">Earn Daily ROI</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Base 0.3% daily + Rank Boost (up to +1% = 1.3% daily).</div>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; gap: 1rem; padding: 1rem; background: rgba(124, 179, 66, 0.05); border-radius: var(--radius-lg); border-left: 3px solid var(--green-accent);">
+                                    <div style="width: 32px; height: 32px; background: var(--green-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; flex-shrink: 0;">4</div>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">60 Days Lock</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Early withdrawal: 50% penalty. After 60 days: no fee.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert--info" style="margin-bottom: 0;">
+                                <i class="fas fa-lightbulb"></i>
+                                <span>Your rank boost is applied automatically based on your leadership rank!</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Referral Section -->
+        <section class="section" id="referral">
+            <div class="container">
+                <div class="section__header">
+                    <h2 class="section__title gradient-text">Referral Program</h2>
+                    <p class="section__subtitle">Build Your Team and Earn Up to 5 Levels Deep</p>
+                </div>
+
+                <div class="alert alert--warning" id="referralWalletAlert" style="display: flex;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Please connect your wallet to view referral info</span>
+                </div>
+
+                <div id="referralContent" style="display: none;">
+                    <!-- Referral Link -->
+                    <div class="referral-hero">
+                        <h3 style="margin-bottom: 0.5rem;">Your Referral Link</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9375rem;">Share this link to invite friends and earn commissions instantly</p>
+                        <div class="referral-link-box">
+                            <input type="text" class="form-input" id="refLink" readonly style="flex: 1; font-size: 0.8125rem;">
+                            <button class="btn btn--primary" onclick="copyRefLink()">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Team Stats -->
+                    <div class="referral-stats">
+                        <div class="dashboard-card">
+                            <div class="dashboard-card__icon"><i class="fas fa-users"></i></div>
+                            <div class="dashboard-card__value" id="refDirects">0</div>
+                            <div class="dashboard-card__label">Direct Referrals</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="dashboard-card__icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="dashboard-card__value" id="refQualified">0</div>
+                            <div class="dashboard-card__label">Qualified Directs</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="dashboard-card__icon"><i class="fas fa-chart-line"></i></div>
+                            <div class="dashboard-card__value" id="refVolume">0 USDT</div>
+                            <div class="dashboard-card__label">Team Volume</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="dashboard-card__icon"><i class="fas fa-coins"></i></div>
+                            <div class="dashboard-card__value" id="refTotalEarned">0 USDT</div>
+                            <div class="dashboard-card__label">Total Referral Earned</div>
+                        </div>
+                    </div>
+
+                    <!-- Commission Levels -->
+                    <h3 style="margin-bottom: 1rem; font-size: 1.125rem;">
+                        <i class="fas fa-layer-group" style="color: var(--green-accent); margin-right: 0.5rem;"></i>
+                        Commission Structure (5 Levels)
+                    </h3>
+                    <div class="commission-levels">
+                        <div class="commission-card">
+                            <div class="commission-card__level">Level 1</div>
+                            <div class="commission-card__percent">5%</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Direct</div>
+                        </div>
+                        <div class="commission-card">
+                            <div class="commission-card__level">Level 2</div>
+                            <div class="commission-card__percent">3%</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Indirect</div>
+                        </div>
+                        <div class="commission-card">
+                            <div class="commission-card__level">Level 3</div>
+                            <div class="commission-card__percent">2%</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Indirect</div>
+                        </div>
+                        <div class="commission-card">
+                            <div class="commission-card__level">Level 4</div>
+                            <div class="commission-card__percent">1%</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Indirect</div>
+                        </div>
+                        <div class="commission-card">
+                            <div class="commission-card__level">Level 5</div>
+                            <div class="commission-card__percent">0.5%</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Indirect</div>
+                        </div>
+                    </div>
+
+                    <!-- Qualification Status -->
+                    <h3 style="margin-bottom: 1rem; font-size: 1.125rem;">
+                        <i class="fas fa-medal" style="color: var(--green-accent); margin-right: 0.5rem;"></i>
+                        Qualification Requirements
+                    </h3>
+                    <div class="qualified-status">
+                        <div class="qualified-card">
+                            <div class="qualified-card__header">
+                                <span class="qualified-card__title">Level 1 Qualified</span>
+                                <span class="qualified-status-icon" id="qualIcon1"><i class="fas fa-lock"></i></span>
+                            </div>
+                            <div class="qualified-requirements">
+                                Min Deposit: 10 USDT<br>
+                                Directs Required: 0
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="qualProgress1" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="qualified-card">
+                            <div class="qualified-card__header">
+                                <span class="qualified-card__title">Level 2 Qualified</span>
+                                <span class="qualified-status-icon" id="qualIcon2"><i class="fas fa-lock"></i></span>
+                            </div>
+                            <div class="qualified-requirements">
+                                Min Deposit: 30 USDT<br>
+                                Qualified Directs: 3
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="qualProgress2" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="qualified-card">
+                            <div class="qualified-card__header">
+                                <span class="qualified-card__title">Level 3 Qualified</span>
+                                <span class="qualified-status-icon" id="qualIcon3"><i class="fas fa-lock"></i></span>
+                            </div>
+                            <div class="qualified-requirements">
+                                Min Deposit: 50 USDT<br>
+                                Qualified Directs: 5
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="qualProgress3" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="qualified-card">
+                            <div class="qualified-card__header">
+                                <span class="qualified-card__title">Level 4 Qualified</span>
+                                <span class="qualified-status-icon" id="qualIcon4"><i class="fas fa-lock"></i></span>
+                            </div>
+                            <div class="qualified-requirements">
+                                Min Deposit: 70 USDT<br>
+                                Qualified Directs: 8
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="qualProgress4" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="qualified-card">
+                            <div class="qualified-card__header">
+                                <span class="qualified-card__title">Level 5 Qualified</span>
+                                <span class="qualified-status-icon" id="qualIcon5"><i class="fas fa-lock"></i></span>
+                            </div>
+                            <div class="qualified-requirements">
+                                Min Deposit: 100 USDT<br>
+                                Qualified Directs: 10
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="qualProgress5" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert--info" style="margin-top: 1.5rem;">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>A "Qualified Direct" is a referral with at least 50 USDT active deposit!</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Leadership Section -->
+        <section class="section" id="leadership">
+            <div class="container">
+                <div class="section__header">
+                    <h2 class="section__title gradient-text">Leadership Ranks</h2>
+                    <p class="section__subtitle">Achieve Higher Ranks for Bigger ROI Boosts</p>
+                </div>
+
+                <div class="ranks-grid">
+                    <!-- Bronze -->
+                    <div class="rank-card bronze" id="rankCard1">
+                        <div class="rank-card__header">
+                            <div class="rank-icon"><i class="fas fa-medal"></i></div>
+                            <div>
+                                <div class="rank-card__title">Bronze</div>
+                                <div class="rank-card__boost">+0.1% ROI Boost</div>
+                            </div>
+                        </div>
+                        <div class="rank-requirements">
+                            <div class="rank-req">
+                                <span class="rank-req__label">Team Volume</span>
+                                <span class="rank-req__value">5,000 USDT</span>
+                            </div>
+                            <div class="rank-req">
+                                <span class="rank-req__label">Qualified Directs</span>
+                                <span class="rank-req__value">50</span>
+                            </div>
+                            <div class="rank-req">
+                                <span class="rank-req__label">Personal Deposit</span>
+                                <span class="rank-req__value">50 USDT</span>
+                            </div>
+                        </div>
+                        <div class="rank-progress">
+                            <div class="rank-progress__label">
+                                <span>Your Progress</span>
+                                <span id="rankProgress1">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="rankBar1" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Silver -->
+                    <div class="rank-card silver" id="rankCard2">
+                        <div class="rank-card__header">
+                            <div class="rank-icon"><i class="fas fa-medal"></i></div>
+                            <div>
+                                <div class="rank-card__title">Silver</div>
+                                <div class="rank-card__boost">+0.2% ROI Boost</div>
+                            </div>
+                        </div>
+                        <div class="rank-requirements">
+                            <div class="rank-req">
+                                <span class="rank-req__label">Team Volume</span>
+                                <span class="rank-req__value">15,000 USDT</span>
+                            </div>
+                            <div class="rank-req">
+                                <span class="rank-req__label">Qualified Directs</span>
+                                <span class="rank-req__value">130</span>
+                            </div>
+                            <div class="rank-req">
+                                <span class="rank-req__label">Personal Deposit</span>
+                                <span class="rank-req__value">50 USDT</span>
+                            </div>
+                        </div>
+                        <div class="rank-progress">
+                            <div class="rank-progress__label">
+                                <span>Your Progress</span>
+                                <span id="rankProgress2">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="rankBar2" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gold -->
+                    <div class="rank-card gold" id="rankCard3">
+                        <div class="rank-card__header">
+                            <div class="rank-icon"><i class="fas fa-crown"></i></div>
+                            <div>
+                                <div class="rank-card__title">Gold</div>
+                                <div class="rank-card__boost">+0.3% ROI Boost</div>
+                            </div>
+                        </div>
+                        <div class="rank-requirements">
+                            <div class="rank-req">
+                                <span class="rank-req__label">Team Volume</span>
+                                <span class="rank-req__value">30,000 USDT</span>
+                            </div>
+                            <div class="rank-req">
+                                <span class="rank-req__label">Qualified Directs</span>
+                                <span class="rank-req__value">300</span>
+                            </div>
+                            <div class="rank-req">
+                                <span class="rank-req__label">Personal Deposit</span>
+                                <span class="rank-req__value">50 USDT</span>
+                            </div>
+                        </div>
+                        <div class="rank-progress">
+                            <div class="rank-progress__label">
+                                <span>Your Progress</span>
+                                <span id="rankProgress3">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="rankBar3" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Platinum -->
+                    <div class="rank-card platinum" id="rankCard4">
+                        <div class="rank-card__header">
+                            <div class="rank-icon"><i class="fas fa-gem"></i></div>
+                            <div>
+                                <div class="rank-card__title">Platinum</div>
+                                <div class="rank-card__boost">+0.5% ROI Boost</div>
+                            </div>
+                        </div>
+                        <div class="rank-requirements">
+                            <div class="rank-req">
+                                <span class="rank-req__label">Team Volume</span>
+                                <span class="rank-req__value">50,000 USDT</span>
+                            </div>
+                            <div class="rank-req">
+                                <span class="rank-req__label">Qualified Directs</span>
+                                <span class="rank-req__value">500</span>
+                            </div>
+                            <div class="rank-req">
+                                <span class="rank-req__label">Personal Deposit</span>
+                                <span class="rank-req__value">100 USDT</span>
+                            </div>
+                        </div>
+                        <div class="rank-progress">
+                            <div class="rank-progress__label">
+                                <span>Your Progress</span>
+                                <span id="rankProgress4">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="rankBar4" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diamond -->
+                    <div class="rank-card diamond" id="rankCard5">
+                        <div class="rank-card__header">
+                            <div class="rank-icon"><i class="fas fa-star"></i></div>
+                            <div>
+                                <div class="rank-card__title">Diamond</div>
+                                <div class="rank-card__boost">+1% ROI Boost</div>
+                            </div>
+                        </div>
+                        <div class="rank-requirements">
+                            <div class="rank-req">
+                                <span class="rank-req__label">Team Volume</span>
+                                <span class="rank-req__value">100,000 USDT</span>
+                            </div>
+                            <div class="rank-req">
+                                <span class="rank-req__label">Qualified Directs</span>
+                                <span class="rank-req__value">1,000</span>
+                            </div>
+                            <div class="rank-req">
+                                <span class="rank-req__label">Personal Deposit</span>
+                                <span class="rank-req__value">100 USDT</span>
+                            </div>
+                        </div>
+                        <div class="rank-progress">
+                            <div class="rank-progress__label">
+                                <span>Your Progress</span>
+                                <span id="rankProgress5">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="rankBar5" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card" style="margin-top: 2rem;">
+                    <div class="info-card__title">
+                        <i class="fas fa-trophy" style="color: var(--gold);"></i>
+                        Rank Benefits
+                    </div>
+                    <div class="info-card__content">
+                        <p style="margin-bottom: 1rem;">Leadership ranks provide permanent ROI boosts on all your active deposits:</p>
+                        <ul class="info-list">
+                            <li><strong>Bronze:</strong> 0.1% boost = 0.4% daily (0.3% base + 0.1%)</li>
+                            <li><strong>Silver:</strong> 0.2% boost = 0.5% daily (0.3% base + 0.2%)</li>
+                            <li><strong>Gold:</strong> 0.3% boost = 0.6% daily (0.3% base + 0.3%)</li>
+                            <li><strong>Platinum:</strong> 0.5% boost = 0.8% daily (0.3% base + 0.5%)</li>
+                            <li><strong>Diamond:</strong> 1% boost = 1.3% daily (0.3% base + 1%)</li>
+                        </ul>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-muted);">
+                            <i class="fas fa-lightbulb" style="color: var(--green-accent); margin-right: 0.5rem;"></i>
+                            Rank is calculated automatically based on your team performance and personal deposit!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="section" id="faq">
+            <div class="container">
+                <div class="section__header">
+                    <h2 class="section__title gradient-text">FAQ</h2>
+                    <p class="section__subtitle">Frequently Asked Questions</p>
+                </div>
+
+                <div class="faq-list">
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFaq(this)">
+                            <span class="faq-question__text">What is NanoTrust and how does it work?</span>
+                            <span class="faq-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <div class="faq-answer__content">
+                                NanoTrust is a decentralized yield infrastructure powered by Venus Protocol. Users deposit USDT which is then supplied to Venus Protocol to generate yields. Investors earn 0.3% base daily ROI, with additional boosts based on their leadership rank (up to +1% for Diamond Rank = 1.3% daily). The platform operates fully on-chain with transparent smart contracts audited by OpenZeppelin standards.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFaq(this)">
+                            <span class="faq-question__text">What is the minimum investment amount?</span>
+                            <span class="faq-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <div class="faq-answer__content">
+                                The minimum investment amount is <strong>1 USDT</strong>. There is no maximum limit. A 10% management fee is deducted from each deposit (sent to the management wallet), with the remaining 90% being deposited to Venus Protocol to start generating yields immediately.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFaq(this)">
+                            <span class="faq-question__text">How does the 60-day lock period work?</span>
+                            <span class="faq-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <div class="faq-answer__content">
+                                All investments have a 60-day lock period starting from your deposit time. During this period, you can claim your daily ROI earnings without restrictions. However, if you choose to withdraw your capital before the 60 days complete, a 50% early withdrawal fee will apply (calculated on your active deposit amount). After 60 days, you can withdraw your full capital without any fees.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFaq(this)">
+                            <span class="faq-question__text">How do leadership ranks and ROI boosts work?</span>
+                            <span class="faq-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <div class="faq-answer__content">
+                                There are 5 leadership ranks (Bronze, Silver, Gold, Platinum, Diamond) that provide ROI boosts from 10% to 100%. To achieve ranks, you need:<br><br>
+                                • <strong>Bronze:</strong> 5,000 USDT team volume + 50 qualified directs + 50 USDT personal<br>
+                                • <strong>Silver:</strong> 15,000 USDT team volume + 130 qualified directs + 50 USDT personal<br>
+                                • <strong>Gold:</strong> 30,000 USDT team volume + 300 qualified directs + 50 USDT personal<br>
+                                • <strong>Platinum:</strong> 50,000 USDT team volume + 500 qualified directs + 100 USDT personal<br>
+                                • <strong>Diamond:</strong> 100,000 USDT team volume + 1000 qualified directs + 100 USDT personal<br><br>
+                                A "qualified direct" is a referral with at least 50 USDT active deposit. Rank boosts are permanent and apply to all your active deposits.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFaq(this)">
+                            <span class="faq-question__text">What are the referral commission rates?</span>
+                            <span class="faq-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <div class="faq-answer__content">
+                                NanoTrust offers a 5-level referral system with commissions:<br>
+                                • <strong>Level 1 (Direct):</strong> 5%<br>
+                                • <strong>Level 2:</strong> 3%<br>
+                                • <strong>Level 3:</strong> 2%<br>
+                                • <strong>Level 4:</strong> 1%<br>
+                                • <strong>Level 5:</strong> 0.5%<br><br>
+                                To unlock higher levels, you must meet qualification criteria including minimum deposits and number of qualified directs. Commissions are paid instantly to your pending referral balance when your downline makes a deposit.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFaq(this)">
+                            <span class="faq-question__text">How do I qualify for referral commissions?</span>
+                            <span class="faq-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <div class="faq-answer__content">
+                                To earn commissions from each level, you must meet qualification requirements:<br>
+                                • <strong>Level 1:</strong> 10 USDT deposit (no directs required)<br>
+                                • <strong>Level 2:</strong> 30 USDT deposit + 3 qualified directs<br>
+                                • <strong>Level 3:</strong> 50 USDT deposit + 5 qualified directs<br>
+                                • <strong>Level 4:</strong> 70 USDT deposit + 8 qualified directs<br>
+                                • <strong>Level 5:</strong> 100 USDT deposit + 10 qualified directs<br><br>
+                                A qualified direct is a referral with at least 50 USDT active deposit. These requirements ensure active participants benefit from the referral system.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFaq(this)">
+                            <span class="faq-question__text">Is the smart contract audited and secure?</span>
+                            <span class="faq-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <div class="faq-answer__content">
+                                Yes, NanoTrust uses OpenZeppelin's battle-tested contracts including ReentrancyGuard and SafeERC20. The contract includes security features like:<br>
+                                • Reentrancy protection on all state-changing functions<br>
+                                • SafeERC20 for secure token transfers<br>
+                                • Only EOA (Externally Owned Account) restriction for investments<br>
+                                • Owner-only functions for emergency Venus interactions<br><br>
+                                The contract is verified on BSCScan. However, as with any DeFi protocol, users should understand the risks involved and only invest what they can afford to lose.<br><br>
+                                <strong>Contract Address:</strong> 0x0d00583f6E99e1370e2DB18a7239C2a18eb7065F
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFaq(this)">
+                            <span class="faq-question__text">How is the daily ROI calculated?</span>
+                            <span class="faq-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <div class="faq-answer__content">
+                                Daily ROI is calculated as:<br><br>
+                                <code>(Active Deposit × (Base ROI + Rank Boost)) / 10000</code><br><br>
+                                Where:<br>
+                                • Base ROI = 30 (0.3%)<br>
+                                • ROI Boost = 0.1% - 1% depending on your rank<br>
+                                • Calculation is based on time elapsed since last claim<br><br>
+                                Example: With 1,000 USDT deposit and Gold rank (+30%):<br>
+                                Daily ROI = 1000 × (30 + 30) / 10000 = 6 USDT per day (0.6%)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__content">
+                <div class="nav__logo" style="margin-bottom: 0.5rem;">
+                    <div class="logo-icon">⚡</div>
+                    <span class="logo-text">NanoTrust</span>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">Secure, Transparent and Fully On-Chain DeFi Platform Powered by Venus Protocol</p>
+                <div class="footer__social">
+                    <a href="#" class="social-link" title="Telegram"><i class="fab fa-telegram"></i></a>
+                    <a href="#" class="social-link" title="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="https://bscscan.com/address/0x0d00583f6E99e1370e2DB18a7239C2a18eb7065F" class="social-link" title="BSCScan" target="_blank"><i class="fas fa-file-contract"></i></a>
+                </div>
+                <div class="contract-badge" style="margin-top: 0.5rem;">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Contract:</span>
+                    <a href="https://bscscan.com/address/0x0d00583f6E99e1370e2DB18a7239C2a18eb7065F" target="_blank">
+                        0x0d...065F
+                    </a>
+                    <i class="fas fa-external-link-alt" style="font-size: 0.625rem;"></i>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 1rem;">
+                    © 2026 All Rights Reserved
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- Withdraw Modal -->
+    <div class="modal-overlay" id="withdrawModal">
+        <div class="modal">
+            <div class="modal__header">
+                <h3 class="modal__title">Withdraw Capital</h3>
+                <button class="modal__close" onclick="closeModal('withdrawModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="withdrawContent">
+                <div class="alert alert--warning" style="margin-bottom: 1rem;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="withdrawWarningText">Early withdrawal will incur a 50% fee!</span>
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9375rem;">
+                    You are about to withdraw your active deposit. 
+                    <span id="withdrawFeeExplanation">Since your 60-day lock period is not complete, 50% of your deposit will be deducted as an early withdrawal fee.</span>
+                </p>
+                <div class="tx-breakdown" style="margin-bottom: 1.5rem;">
+                    <div class="tx-row">
+                        <span class="tx-label">Active Deposit:</span>
+                        <span id="withdrawAmount">0.00 USDT</span>
+                    </div>
+                    <div class="tx-row">
+                        <span class="tx-label">Withdrawal Fee:</span>
+                        <span id="withdrawFee" style="color: var(--red);">0.00 USDT (50%)</span>
+                    </div>
+                    <div class="tx-row">
+                        <span class="tx-label">You Receive:</span>
+                        <span id="withdrawReceive" style="color: var(--gold);">0.00 USDT</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn btn--secondary" style="flex: 1;" onclick="closeModal('withdrawModal')">Cancel</button>
+                    <button class="btn btn--danger" style="flex: 1;" onclick="confirmWithdraw()">
+                        <i class="fas fa-sign-out-alt"></i> Confirm Withdraw
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/web3.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
