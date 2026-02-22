@@ -3,7 +3,7 @@ const CONFIG = {
     CONTRACT_ADDRESS: '0x52cE1457ad7268e2Febd8332b2Db3b5618D76780',
     USDT_ADDRESS: '0x55d398326f99059fF775485246999027B3197955', // BSC USDT
     VENUS_USDT_ADDRESS: '0xfD5840Cd36d94D7229439859C0112a4185BC0255', // Venus USDT
-    BSC_RPC: 'https://bsc-dataseed.binance.org/',
+    BSC_RPC: 'https://bsc-mainnet.core.chainstack.com/c7d38b8d72cfc7178040ad0f821e9dcf',
     BSC_CHAIN_ID: '0x38', // 56 dalam hex
 };
 
