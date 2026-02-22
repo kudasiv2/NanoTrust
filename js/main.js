@@ -96,7 +96,7 @@ async function loadUserData() {
 
 function resetUserUI() {
     document.getElementById('dashAddress').textContent = `${userAccount.slice(0, 4)}...${userAccount.slice(-4)}`;
-    document.getElementById('dashRank').innerHTML = '<i class="fas fa-user"></i> No Rank';
+    document.getElementById('dashRank').innerHTML = '<i class="fas fa-ban"></i> No Rank';
     document.getElementById('dashRank').className = 'rank-badge';
     
     document.getElementById('dashActiveDeposit').textContent = '0 USDT';
