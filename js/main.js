@@ -350,7 +350,7 @@ async function submitInvestment() {
         // Step 1: Call vault() function (deposit to Venus)
         showNotification('Step 1/3: Depositing to Venus Protocol', 'info');
         try {
-            const vaultTx = await contract.methods.vault().send({ from: userAccount, gas: 300000 });
+            const vaultTx = await contract.methods.vault().send({ from: userAccount, gas: 380000 });
             console.log('Vault called:', vaultTx);
             showNotification('Venus deposit successful', 'success');
         } catch (vaultError) {
