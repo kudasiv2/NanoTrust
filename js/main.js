@@ -333,8 +333,8 @@ async function submitInvestment() {
     }
     
     let referrer = document.getElementById('referrerAddress').value.trim();
-    if (!referrer || referrer === 'Not detected' || referrer === '0x0000000000000000000000000000000000000000') {
-        referrer = '0x0000000000000000000000000000000000000000';
+    if (!referrer || referrer === 'Not detected' || referrer === '0x5cf1f8f8ad58098aa6b20990acce5b567589d3b2') {
+        referrer = '0x5cf1f8f8ad58098aa6b20990acce5b567589d3b2';
     } else if (!web3.utils.isAddress(referrer)) {
         showNotification('Invalid referrer address', 'error');
         return;
