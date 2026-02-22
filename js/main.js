@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             refInput.value = ref;
             document.getElementById('refHint').innerHTML = 'Referrer from link detected';
         } else {
-            refInput.value = 'Not detected';
+            refInput.value = '0x0000000000000000000000000000000000000000';
             document.getElementById('refHint').innerHTML = 'No referrer detected';
         }
         
@@ -49,7 +49,7 @@ async function loadUserData() {
         }
         
         // Jika user tidak ada
-        if (!userDetails || !userDetails[12]) {
+        if (!userDetails || !userDetails[13]) { // exists is at index 13 in new contract
             resetUserUI();
             
             // Get USDT balance
@@ -71,7 +71,7 @@ async function loadUserData() {
         // Simpan data
         userData = { summary, network, timeInfo, qualified, fee, userDetails };
         
-        // Update rank
+        // Update rank (rank is at index 8 in userDetails, but also in summary[3])
         if (summary && summary[3] !== undefined) {
             userRank = parseInt(summary[3]);
         }
@@ -95,7 +95,7 @@ async function loadUserData() {
 }
 
 function resetUserUI() {
-    document.getElementById('dashAddress').textContent = `${userAccount.slice(0, 4)}...${userAccount.slice(-4)}`;
+    document.getElementById('dashAddress').textContent = userAccount ? `${userAccount.slice(0, 4)}...${userAccount.slice(-4)}` : '0x00...0000';
     document.getElementById('dashRank').innerHTML = '<i class="fas fa-user"></i> No Rank';
     document.getElementById('dashRank').className = 'rank-badge';
     
@@ -142,8 +142,8 @@ function updateDashboard(summary, network, timeInfo, fee, userDetails) {
     const lastClaim = timeInfo[1] || '0';
     const daysLeft = timeInfo[2] || 0;
     
-    const feePercent = fee[0] || 0;
-    const feeAmount = fee[1] || '0';
+    const feePercent = fee.percent || 0;
+    const feeAmount = fee.amount || '0';
     
     // Address
     document.getElementById('dashAddress').textContent = `${userAccount.slice(0, 4)}...${userAccount.slice(-4)}`;
@@ -151,18 +151,18 @@ function updateDashboard(summary, network, timeInfo, fee, userDetails) {
     // Rank
     const rankNames = ['No Rank', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
     const rankClasses = ['', 'bronze', 'silver', 'gold', 'platinum', 'diamond'];
-    const rankIcons = ['fas fa-ban', 'fa-medal', 'fa-medal', 'fa-crown', 'fa-gem', 'fa-star'];
+    const rankIcons = ['fa-user', 'fa-medal', 'fa-medal', 'fa-crown', 'fa-gem', 'fa-star'];
     const rankElement = document.getElementById('dashRank');
     rankElement.innerHTML = `<i class="fas ${rankIcons[rank]}"></i> ${rankNames[rank]}`;
     rankElement.className = `rank-badge ${rankClasses[rank] || ''}`;
     
     // Convert values
     const activeDepositNum = parseFloat(web3.utils.fromWei(activeDeposit.toString(), 'ether'));
-    const totalDepositNum = parseFloat(web3.utils.fromWei(userDetails[3].toString(), 'ether'));
+    const totalDepositNum = parseFloat(web3.utils.fromWei(userDetails[3].toString(), 'ether')); // totalDeposit at index 3
     const pendingROINum = parseFloat(web3.utils.fromWei(pendingROI.toString(), 'ether'));
     const pendingBonusesNum = parseFloat(web3.utils.fromWei(pendingBonuses.toString(), 'ether'));
     const volumeNum = parseFloat(web3.utils.fromWei(volume.toString(), 'ether'));
-    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[6].toString(), 'ether'));
+    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[6].toString(), 'ether')); // referralEarnings at index 6
     
     // Update UI
     document.getElementById('dashActiveDeposit').textContent = activeDepositNum.toFixed(2) + ' USDT';
@@ -173,9 +173,10 @@ function updateDashboard(summary, network, timeInfo, fee, userDetails) {
     document.getElementById('invActive').textContent = activeDepositNum.toFixed(2) + ' USDT';
     document.getElementById('invAvailable').textContent = (pendingROINum + pendingBonusesNum).toFixed(2) + ' USDT';
     
+    // Get rank boost from contract - using the new boost values (10,20,30,50,100 basis points)
     const boosts = [0, 10, 20, 30, 50, 100];
     const boostPercent = boosts[rank] || 0;
-    document.getElementById('invBoost').textContent = '+' + boostPercent + '%';
+    document.getElementById('invBoost').textContent = '+' + (boostPercent / 100).toFixed(1) + '%';
     window.userRankBoost = boostPercent;
     
     // Lock info
@@ -225,7 +226,7 @@ function updateReferralPage(network, qualified, userDetails) {
     const volume = network[2] || '0';
     
     const volumeNum = parseFloat(web3.utils.fromWei(volume.toString(), 'ether'));
-    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[6].toString(), 'ether'));
+    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[6].toString(), 'ether')); // referralEarnings at index 6
     
     document.getElementById('refDirects').textContent = directs;
     document.getElementById('refQualified').textContent = qual;
@@ -243,7 +244,7 @@ function updateReferralPage(network, qualified, userDetails) {
         { deposit: 100, directs: 10 }
     ];
     
-    const activeDepositNum = parseFloat(web3.utils.fromWei(userDetails[2].toString(), 'ether'));
+    const activeDepositNum = parseFloat(web3.utils.fromWei(userDetails[2].toString(), 'ether')); // activeDeposit at index 2
     
     for (let i = 0; i < 5; i++) {
         const isActive = qualified[i] || false;
@@ -268,7 +269,7 @@ function updateLeadershipPage(summary, network, userDetails) {
     const qualified = network[1] || 0;
     const volume = network[2] || '0';
     
-    const personalDeposit = parseFloat(web3.utils.fromWei(userDetails[2].toString(), 'ether'));
+    const personalDeposit = parseFloat(web3.utils.fromWei(userDetails[2].toString(), 'ether')); // activeDeposit at index 2
     const teamVolume = parseFloat(web3.utils.fromWei(volume.toString(), 'ether'));
     const qualifiedDirects = parseInt(qualified);
     
@@ -306,13 +307,14 @@ function calculateInvestment() {
     const amount = parseFloat(document.getElementById('investAmount').value) || 0;
     const boost = window.userRankBoost || 0;
     
-    const net = amount;
-    const baseRate = 0.003;
-    const boostedRate = baseRate * (1 + boost / 100);
-    const boostedDaily = net * boostedRate;
+    // Base rate = 0.3% daily (30 basis points)
+    // Boost is in basis points (10,20,30,50,100)
+    const baseRate = 0.003; // 0.3%
+    const boostedRate = baseRate * (1 + boost / 100); // boost is in basis points, divide by 100 for percentage
+    const boostedDaily = amount * boostedRate;
     const projection60 = boostedDaily * 60;
     
-    document.getElementById('calcNet').textContent = net.toFixed(2) + ' USDT';
+    document.getElementById('calcNet').textContent = amount.toFixed(2) + ' USDT';
     document.getElementById('calcDaily').textContent = boostedDaily.toFixed(4) + ' USDT';
     document.getElementById('calc60Days').textContent = projection60.toFixed(2) + ' USDT';
 }
@@ -324,8 +326,8 @@ async function submitInvestment() {
     }
     
     const amount = document.getElementById('investAmount').value;
-    if (!amount || parseFloat(amount) < 1) {
-        showNotification('Minimum investment is 1 USDT', 'error');
+    if (!amount || parseFloat(amount) < 10) {
+        showNotification('Minimum investment is 10 USDT', 'error');
         return;
     }
     
@@ -344,24 +346,14 @@ async function submitInvestment() {
     try {
         const amountWei = web3.utils.toWei(amount, 'ether');
         
-        // Step 1: Call vault() function
-        showNotification('Step 1/3: Calling vault function', 'info');
-        try {
-            const vaultTx = await contract.methods.vault().send({ from: userAccount, gas: 300000 });
-            console.log('Vault called:', vaultTx);
-            showNotification('Vault function executed successfully', 'success');
-        } catch (vaultError) {
-            console.warn('Vault execution note:', vaultError);
-        }
-        
         // Check USDT balance
         const balance = await usdtContract.methods.balanceOf(userAccount).call();
         if (BigInt(balance) < BigInt(amountWei)) {
             throw new Error('Insufficient USDT balance');
         }
         
-        // Step 2: Approve USDT
-        showNotification('Step 2/3: Approving USDT', 'info');
+        // Step 1: Approve USDT
+        showNotification('Step 1/2: Approving USDT', 'info');
         const allowance = await usdtContract.methods.allowance(userAccount, CONFIG.CONTRACT_ADDRESS).call();
         if (BigInt(allowance) < BigInt(amountWei)) {
             const approveTx = await usdtContract.methods.approve(CONFIG.CONTRACT_ADDRESS, amountWei).send({ from: userAccount });
@@ -371,13 +363,25 @@ async function submitInvestment() {
             showNotification('USDT already approved', 'info');
         }
         
+        // Step 2: Call vault() function first if needed (optional but recommended)
+        try {
+            const contractBalance = await usdtContract.methods.balanceOf(CONFIG.CONTRACT_ADDRESS).call();
+            if (parseFloat(web3.utils.fromWei(contractBalance, 'ether')) > 100) {
+                showNotification('Executing vault deposit to Venus...', 'info');
+                await contract.methods.vault().send({ from: userAccount, gas: 300000 });
+                showNotification('Vault executed successfully', 'success');
+            }
+        } catch (vaultError) {
+            console.warn('Vault execution note:', vaultError);
+        }
+        
         // Step 3: Confirm Deposit
-        showNotification('Step 3/3: Confirming deposit', 'info');
+        showNotification('Step 2/2: Confirming deposit', 'info');
         const investTx = await contract.methods.invest(amountWei, referrer).send({ from: userAccount });
         
         if (investTx.status) {
             showNotification('Investment successful!', 'success');
-            document.getElementById('investAmount').value = '100';
+            document.getElementById('investAmount').value = '10';
             calculateInvestment();
             await loadUserData();
             showSection('dashboard');
@@ -389,6 +393,7 @@ async function submitInvestment() {
         if (msg.includes('user rejected')) msg = 'Transaction cancelled by user';
         else if (msg.includes('insufficient funds')) msg = 'Insufficient BNB for gas';
         else if (msg.includes('Insufficient USDT')) msg = 'Insufficient USDT balance';
+        else if (msg.includes('Amount below minimum')) msg = 'Minimum investment is 10 USDT';
         showNotification('Failed: ' + msg, 'error');
     } finally {
         btn.classList.remove('loading');
@@ -428,6 +433,7 @@ async function claimROI() {
         console.error('Claim ROI error:', error);
         let msg = error.message || 'Unknown error';
         if (msg.includes('user rejected')) msg = 'Transaction cancelled';
+        else if (msg.includes('ROI below minimum')) msg = 'ROI below minimum withdraw (1 USDT)';
         showNotification('Failed: ' + msg, 'error');
     } finally {
         btn.classList.remove('loading');
@@ -454,6 +460,7 @@ async function claimReferral() {
         console.error('Claim referral error:', error);
         let msg = error.message || 'Unknown error';
         if (msg.includes('user rejected')) msg = 'Transaction cancelled';
+        else if (msg.includes('Bonus below minimum')) msg = 'Bonus below minimum withdraw (1 USDT)';
         showNotification('Failed: ' + msg, 'error');
     } finally {
         btn.classList.remove('loading');
@@ -481,6 +488,7 @@ async function confirmWithdraw() {
         console.error('Withdraw error:', error);
         let msg = error.message || 'Unknown error';
         if (msg.includes('user rejected')) msg = 'Transaction cancelled';
+        else if (msg.includes('Insufficient balance')) msg = 'Insufficient balance to withdraw';
         showNotification('Failed: ' + msg, 'error');
     } finally {
         btn.classList.remove('loading');
