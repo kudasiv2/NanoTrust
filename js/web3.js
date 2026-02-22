@@ -13,7 +13,7 @@ async function initWeb3() {
     try {
         web3 = new Web3(new Web3.providers.HttpProvider(CONFIG.BSC_RPC));
         
-        // Initialize contracts
+        // Initialize contracts with new ABI
         contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
         usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
         venusContract = new web3.eth.Contract(VENUS_ABI, CONFIG.VENUS_USDT_ADDRESS);
