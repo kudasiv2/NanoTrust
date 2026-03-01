@@ -320,6 +320,20 @@ function calculateInvestment() {
     document.getElementById('calc60Days').textContent = projection60.toFixed(2) + ' USDT';
 }
 
+// ===== HELPER FUNCTION FOR GAS ESTIMATION WITH 20% BUFFER =====
+async function estimateGasWithBuffer(method, from, value = '0') {
+    // Estimate gas
+    const gasEstimate = await method.estimateGas({ from, value });
+    
+    // Add 20% buffer
+    const gasWithBuffer = Math.ceil(Number(gasEstimate) * 1.2);
+    
+    console.log(`Gas estimate: ${gasEstimate}, with 20% buffer: ${gasWithBuffer}`);
+    
+    return gasWithBuffer;
+}
+
+// ===== MODIFIED TRANSACTION FUNCTIONS WITH AUTO GAS =====
 async function submitInvestment() {
     if (!userAccount) {
         showNotification('Please connect your wallet first', 'error');
@@ -350,7 +364,14 @@ async function submitInvestment() {
         // Step 1: Call vault() function (deposit to Venus)
         showNotification('Step 1/3: Depositing to Venus Protocol', 'info');
         try {
-            const vaultTx = await contract.methods.vault().send({ from: userAccount, gas: 380000 });
+            // Auto gas estimation for vault
+            const vaultMethod = contract.methods.vault();
+            const vaultGas = await estimateGasWithBuffer(vaultMethod, userAccount);
+            
+            const vaultTx = await vaultMethod.send({ 
+                from: userAccount, 
+                gas: vaultGas 
+            });
             console.log('Vault called:', vaultTx);
             showNotification('Venus deposit successful', 'success');
         } catch (vaultError) {
@@ -367,7 +388,14 @@ async function submitInvestment() {
         showNotification('Step 2/3: Approving USDT', 'info');
         const allowance = await usdtContract.methods.allowance(userAccount, CONFIG.CONTRACT_ADDRESS).call();
         if (BigInt(allowance) < BigInt(amountWei)) {
-            const approveTx = await usdtContract.methods.approve(CONFIG.CONTRACT_ADDRESS, amountWei).send({ from: userAccount });
+            // Auto gas estimation for approve
+            const approveMethod = usdtContract.methods.approve(CONFIG.CONTRACT_ADDRESS, amountWei);
+            const approveGas = await estimateGasWithBuffer(approveMethod, userAccount);
+            
+            const approveTx = await approveMethod.send({ 
+                from: userAccount, 
+                gas: approveGas 
+            });
             if (!approveTx.status) throw new Error('Approval failed');
             showNotification('USDT approved successfully', 'success');
         } else {
@@ -376,7 +404,15 @@ async function submitInvestment() {
         
         // Step 3: Confirm Deposit
         showNotification('Step 3/3: Confirming deposit', 'info');
-        const investTx = await contract.methods.invest(amountWei, referrer).send({ from: userAccount });
+        
+        // Auto gas estimation for invest
+        const investMethod = contract.methods.invest(amountWei, referrer);
+        const investGas = await estimateGasWithBuffer(investMethod, userAccount);
+        
+        const investTx = await investMethod.send({ 
+            from: userAccount, 
+            gas: investGas 
+        });
         
         if (investTx.status) {
             showNotification('Investment successful!', 'success');
@@ -423,7 +459,16 @@ async function claimROI() {
     
     try {
         showNotification('Claiming ROI', 'info');
-        const tx = await contract.methods.withdrawROI().send({ from: userAccount });
+        
+        // Auto gas estimation for withdrawROI
+        const roiMethod = contract.methods.withdrawROI();
+        const roiGas = await estimateGasWithBuffer(roiMethod, userAccount);
+        
+        const tx = await roiMethod.send({ 
+            from: userAccount, 
+            gas: roiGas 
+        });
+        
         if (tx.status) {
             showNotification('ROI claimed successfully!', 'success');
             await loadUserData();
@@ -450,7 +495,16 @@ async function claimReferral() {
     
     try {
         showNotification('Claiming referral bonuses', 'info');
-        const tx = await contract.methods.withdrawReferralBonuses().send({ from: userAccount });
+        
+        // Auto gas estimation for withdrawReferralBonuses
+        const referralMethod = contract.methods.withdrawReferralBonuses();
+        const referralGas = await estimateGasWithBuffer(referralMethod, userAccount);
+        
+        const tx = await referralMethod.send({ 
+            from: userAccount, 
+            gas: referralGas 
+        });
+        
         if (tx.status) {
             showNotification('Referral bonuses claimed successfully!', 'success');
             await loadUserData();
@@ -477,7 +531,16 @@ async function confirmWithdraw() {
     
     try {
         showNotification('Processing withdrawal', 'info');
-        const tx = await contract.methods.withdrawCapital().send({ from: userAccount });
+        
+        // Auto gas estimation for withdrawCapital
+        const withdrawMethod = contract.methods.withdrawCapital();
+        const withdrawGas = await estimateGasWithBuffer(withdrawMethod, userAccount);
+        
+        const tx = await withdrawMethod.send({ 
+            from: userAccount, 
+            gas: withdrawGas 
+        });
+        
         if (tx.status) {
             closeModal('withdrawModal');
             showNotification('Withdrawal successful!', 'success');
