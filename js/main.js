@@ -14,8 +14,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             refInput.value = ref;
             document.getElementById('refHint').innerHTML = 'Referrer from link detected';
         } else {
-            refInput.value = 'Not detected';
-            document.getElementById('refHint').innerHTML = 'No referrer detected';
+            document.getElementById('refHint').innerHTML = 'Leave empty if no referrer';
         }
         
         // Auto-connect if previously connected
@@ -39,7 +38,7 @@ async function loadUserData() {
     if (!userAccount || !contract) return;
     
     try {
-        // Cek apakah user exists di contract
+        // Check if user exists in contract
         let userDetails;
         try {
             userDetails = await contract.methods.users(userAccount).call();
@@ -48,7 +47,7 @@ async function loadUserData() {
             userDetails = null;
         }
         
-        // Jika user tidak ada (check exists field - index 13 in new contract)
+        // If user doesn't exist
         if (!userDetails || !userDetails[13]) {
             resetUserUI();
             
@@ -68,7 +67,7 @@ async function loadUserData() {
         const qualified = await contract.methods.getQualifiedStatus(userAccount).call();
         const fee = await contract.methods.getWithdrawFee(userAccount).call();
         
-        // Simpan data
+        // Save data
         userData = { summary, network, timeInfo, qualified, fee, userDetails };
         
         // Update rank
@@ -173,10 +172,11 @@ function updateDashboard(summary, network, timeInfo, fee, userDetails) {
     document.getElementById('invActive').textContent = activeDepositNum.toFixed(2) + ' USDT';
     document.getElementById('invAvailable').textContent = (pendingROINum + pendingBonusesNum).toFixed(2) + ' USDT';
     
-    // Get rank boost from contract (ranks[rank-1].roiBoost)
-    const boosts = [0, 10, 20, 30, 50, 100]; // 0.1%, 0.2%, 0.3%, 0.5%, 1% in basis points
+    // Get rank boost (10, 20, 30, 50, 100 basis points)
+    const boosts = [0, 10, 20, 30, 50, 100];
     const boostPercent = boosts[rank] || 0;
-    document.getElementById('invBoost').textContent = '+' + (boostPercent/10) + '%'; // Convert to percentage
+    const dailyRate = (30 + boostPercent) / 1000; // Convert to percentage
+    document.getElementById('invBoost').textContent = dailyRate.toFixed(2) + '%';
     window.userRankBoost = boostPercent;
     
     // Lock info (60 days = 60 * 24 * 60 * 60 seconds)
@@ -309,31 +309,27 @@ function calculateInvestment() {
     const amount = parseFloat(document.getElementById('investAmount').value) || 0;
     const boost = window.userRankBoost || 0;
     
-    const net = amount;
+    const fee = amount * 0.10; // 10% management fee
+    const net = amount - fee;
     const baseRate = 0.003; // 0.3%
-    const boostedRate = baseRate * (1 + boost / 1000); // boost is in basis points (10 = 0.1%)
+    const boostedRate = baseRate * (1 + boost / 1000); // boost in basis points
     const boostedDaily = net * boostedRate;
     const projection60 = boostedDaily * 60;
     
     document.getElementById('calcNet').textContent = net.toFixed(2) + ' USDT';
-    document.getElementById('calcDaily').textContent = boostedDaily.toFixed(4) + ' USDT';
+    document.getElementById('calcDaily').textContent = (net * 0.003).toFixed(4) + ' USDT';
+    document.getElementById('calcDailyBoosted').textContent = boostedDaily.toFixed(4) + ' USDT';
     document.getElementById('calc60Days').textContent = projection60.toFixed(2) + ' USDT';
 }
 
-// ===== HELPER FUNCTION FOR GAS ESTIMATION WITH 20% BUFFER =====
+// Helper function for gas estimation with 20% buffer
 async function estimateGasWithBuffer(method, from, value = '0') {
-    // Estimate gas
     const gasEstimate = await method.estimateGas({ from, value });
-    
-    // Add 20% buffer
     const gasWithBuffer = Math.ceil(Number(gasEstimate) * 1.2);
-    
     console.log(`Gas estimate: ${gasEstimate}, with 20% buffer: ${gasWithBuffer}`);
-    
     return gasWithBuffer;
 }
 
-// ===== MODIFIED TRANSACTION FUNCTIONS WITH AUTO GAS =====
 async function submitInvestment() {
     if (!userAccount) {
         showNotification('Please connect your wallet first', 'error');
@@ -341,14 +337,14 @@ async function submitInvestment() {
     }
     
     const amount = document.getElementById('investAmount').value;
-    if (!amount || parseFloat(amount) < 10) { // MIN_INVEST = 10 USDT
+    if (!amount || parseFloat(amount) < 10) {
         showNotification('Minimum investment is 10 USDT', 'error');
         return;
     }
     
     let referrer = document.getElementById('referrerAddress').value.trim();
-    if (!referrer || referrer === 'Not detected' || referrer === '0x5cf1f8f8ad58098aa6b20990acce5b567589d3b2') {
-        referrer = '0x5cf1f8f8ad58098aa6b20990acce5b567589d3b2';
+    if (!referrer || referrer === '') {
+        referrer = '0x0000000000000000000000000000000000000000';
     } else if (!web3.utils.isAddress(referrer)) {
         showNotification('Invalid referrer address', 'error');
         return;
@@ -361,19 +357,14 @@ async function submitInvestment() {
     try {
         const amountWei = web3.utils.toWei(amount, 'ether');
         
-        // Step 1: Call vault() function (deposit to Venus)
-        showNotification('Step 1/3: Depositing to Venus Protocol', 'info');
+        // Step 1: Call vault() function (deposit to PancakeSwap V3)
+        showNotification('Step 1/3: Depositing to PancakeSwap V3 LP', 'info');
         try {
-            // Auto gas estimation for vault
             const vaultMethod = contract.methods.vault();
             const vaultGas = await estimateGasWithBuffer(vaultMethod, userAccount);
-            
-            const vaultTx = await vaultMethod.send({ 
-                from: userAccount, 
-                gas: vaultGas 
-            });
+            const vaultTx = await vaultMethod.send({ from: userAccount, gas: vaultGas });
             console.log('Vault called:', vaultTx);
-            showNotification('Venus deposit successful', 'success');
+            showNotification('PancakeSwap deposit successful', 'success');
         } catch (vaultError) {
             console.warn('Vault execution note:', vaultError);
         }
@@ -388,14 +379,9 @@ async function submitInvestment() {
         showNotification('Step 2/3: Approving USDT', 'info');
         const allowance = await usdtContract.methods.allowance(userAccount, CONFIG.CONTRACT_ADDRESS).call();
         if (BigInt(allowance) < BigInt(amountWei)) {
-            // Auto gas estimation for approve
             const approveMethod = usdtContract.methods.approve(CONFIG.CONTRACT_ADDRESS, amountWei);
             const approveGas = await estimateGasWithBuffer(approveMethod, userAccount);
-            
-            const approveTx = await approveMethod.send({ 
-                from: userAccount, 
-                gas: approveGas 
-            });
+            const approveTx = await approveMethod.send({ from: userAccount, gas: approveGas });
             if (!approveTx.status) throw new Error('Approval failed');
             showNotification('USDT approved successfully', 'success');
         } else {
@@ -404,19 +390,13 @@ async function submitInvestment() {
         
         // Step 3: Confirm Deposit
         showNotification('Step 3/3: Confirming deposit', 'info');
-        
-        // Auto gas estimation for invest
         const investMethod = contract.methods.invest(amountWei, referrer);
         const investGas = await estimateGasWithBuffer(investMethod, userAccount);
-        
-        const investTx = await investMethod.send({ 
-            from: userAccount, 
-            gas: investGas 
-        });
+        const investTx = await investMethod.send({ from: userAccount, gas: investGas });
         
         if (investTx.status) {
             showNotification('Investment successful!', 'success');
-            document.getElementById('investAmount').value = '10';
+            document.getElementById('investAmount').value = '100';
             calculateInvestment();
             await loadUserData();
             showSection('dashboard');
@@ -459,15 +439,9 @@ async function claimROI() {
     
     try {
         showNotification('Claiming ROI', 'info');
-        
-        // Auto gas estimation for withdrawROI
         const roiMethod = contract.methods.withdrawROI();
         const roiGas = await estimateGasWithBuffer(roiMethod, userAccount);
-        
-        const tx = await roiMethod.send({ 
-            from: userAccount, 
-            gas: roiGas 
-        });
+        const tx = await roiMethod.send({ from: userAccount, gas: roiGas });
         
         if (tx.status) {
             showNotification('ROI claimed successfully!', 'success');
@@ -495,15 +469,9 @@ async function claimReferral() {
     
     try {
         showNotification('Claiming referral bonuses', 'info');
-        
-        // Auto gas estimation for withdrawReferralBonuses
         const referralMethod = contract.methods.withdrawReferralBonuses();
         const referralGas = await estimateGasWithBuffer(referralMethod, userAccount);
-        
-        const tx = await referralMethod.send({ 
-            from: userAccount, 
-            gas: referralGas 
-        });
+        const tx = await referralMethod.send({ from: userAccount, gas: referralGas });
         
         if (tx.status) {
             showNotification('Referral bonuses claimed successfully!', 'success');
@@ -531,15 +499,9 @@ async function confirmWithdraw() {
     
     try {
         showNotification('Processing withdrawal', 'info');
-        
-        // Auto gas estimation for withdrawCapital
         const withdrawMethod = contract.methods.withdrawCapital();
         const withdrawGas = await estimateGasWithBuffer(withdrawMethod, userAccount);
-        
-        const tx = await withdrawMethod.send({ 
-            from: userAccount, 
-            gas: withdrawGas 
-        });
+        const tx = await withdrawMethod.send({ from: userAccount, gas: withdrawGas });
         
         if (tx.status) {
             closeModal('withdrawModal');
