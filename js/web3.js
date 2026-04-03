@@ -2,7 +2,7 @@
 let web3;
 let contract;
 let usdtContract;
-let venusContract;
+let pancakeV3Contract;
 let userAccount = null;
 let userData = null;
 let userRank = 0;
@@ -13,10 +13,10 @@ async function initWeb3() {
     try {
         web3 = new Web3(new Web3.providers.HttpProvider(CONFIG.BSC_RPC));
         
-        // Initialize contracts with new ABI
+        // Initialize contracts
         contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
         usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
-        venusContract = new web3.eth.Contract(VENUS_ABI, CONFIG.VENUS_USDT_ADDRESS);
+        pancakeV3Contract = new web3.eth.Contract(PANCAKE_V3_ABI, CONFIG.PANCAKE_V3_NPM);
         
         return true;
     } catch (error) {
@@ -49,7 +49,7 @@ async function connectWallet() {
                             chainId: CONFIG.BSC_CHAIN_ID,
                             chainName: 'Binance Smart Chain',
                             nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-                            rpcUrls: [CONFIG.BSC_RPC],
+                            rpcUrls: ['https://bsc-dataseed.binance.org/'],
                             blockExplorerUrls: ['https://bscscan.com/']
                         }]
                     });
@@ -67,7 +67,7 @@ async function connectWallet() {
             web3 = new Web3(window.ethereum);
             contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
             usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
-            venusContract = new web3.eth.Contract(VENUS_ABI, CONFIG.VENUS_USDT_ADDRESS);
+            pancakeV3Contract = new web3.eth.Contract(PANCAKE_V3_ABI, CONFIG.PANCAKE_V3_NPM);
             
             userAccount = accounts[0];
             localStorage.setItem('walletConnected', 'true');
@@ -130,18 +130,36 @@ function updateWalletUI() {
     }
 }
 
-// ===== VENUS TVL =====
+// ===== LOAD TVL FROM PANCAKE V3 =====
 async function loadVenusTVL() {
     try {
-        // TVL = Liquidity = getCash()
-        const cash = await venusContract.methods.getCash().call();
-        const tvlValue = parseFloat(web3.utils.fromWei(cash.toString(), 'ether'));
+        // Get position info from PancakeSwap V3
+        const position = await pancakeV3Contract.methods.positions(CONFIG.POSITION_ID).call();
+        
+        // Calculate TVL = tokensOwed0 + tokensOwed1 (approximate)
+        const liquidity0 = parseFloat(web3.utils.fromWei(position.tokensOwed0.toString(), 'ether'));
+        const liquidity1 = parseFloat(web3.utils.fromWei(position.tokensOwed1.toString(), 'ether'));
+        
+        // Get contract stats for additional info
+        const stats = await contract.methods.getContractStats().call();
+        const totalInvested = parseFloat(web3.utils.fromWei(stats[0].toString(), 'ether'));
+        
+        const tvlValue = totalInvested + liquidity0 + liquidity1;
         const tvlFormatted = '$' + formatNumber(tvlValue, true);
         
         document.getElementById('statTVL').innerHTML = tvlFormatted;
         
     } catch (error) {
         console.error('TVL error:', error);
-        document.getElementById('statTVL').innerHTML = 'Error loading TVL';
+        document.getElementById('statTVL').innerHTML = 'Loading...';
+        
+        // Fallback: try to get totalInvested only
+        try {
+            const totalInvested = await contract.methods.totalInvested().call();
+            const tvlValue = parseFloat(web3.utils.fromWei(totalInvested.toString(), 'ether'));
+            document.getElementById('statTVL').innerHTML = '$' + formatNumber(tvlValue, true);
+        } catch (e) {
+            document.getElementById('statTVL').innerHTML = 'Error loading TVL';
+        }
     }
 }
