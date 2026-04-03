@@ -74,8 +74,8 @@ function openWithdrawModal() {
     if (!userAccount || !userData) return;
     
     const activeDeposit = userData.summary[0];
-    const feePercent = userData.fee[0] || 0;
-    const feeAmount = userData.fee[1] || '0';
+    const feePercent = userData.fee ? userData.fee[0] : 0;
+    const feeAmount = userData.fee ? userData.fee[1] : '0';
     
     const activeNum = parseFloat(web3.utils.fromWei(activeDeposit.toString(), 'ether'));
     if (activeNum < 0.01) {
