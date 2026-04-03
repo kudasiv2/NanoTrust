@@ -2,21 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     
-    <title>NanoTether - Decentralized Yield Infrastructure</title>
-    <meta name="description" content="Powered by Venus Protocol">
-
-    <link rel="icon" type="image/svg+xml" href="https://nanotether.com/images/logo.svg">
-    <link rel="icon" type="image/png" sizes="32x32" href="https://nanotether.com/images/logo.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="https://nanotether.com/images/logo.png">
-    <link rel="apple-touch-icon" href="https://nanotether.com/images/logo.png">
-
-    <link rel="manifest" href="/manifest.json">
-
-    <meta property="og:title" content="NanoTether">
-    <meta property="og:description" content="Decentralized Yield Infrastructure Powered by Venus Protocol">
-    <meta property="og:image" content="https://nanotether.com/images/logo.png">
+    <title>TornadoFarming - Decentralized Yield Farming</title>
+    <meta name="description" content="Decentralized Yield Farming Platform Powered by PancakeSwap V3">
+    <meta name="keywords" content="defi, yield farming, pancakeswap, bsc, tornado farming">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%232d6a4f'/%3E%3Cpath d='M50 25 L65 40 L50 55 L35 40 Z' fill='%23f5c542'/%3E%3C/svg%3E">
+    
+    <meta property="og:title" content="TornadoFarming">
+    <meta property="og:description" content="Decentralized Yield Farming Platform Powered by PancakeSwap V3">
     <meta property="og:type" content="website">
     
     <!-- Fonts -->
@@ -29,9 +25,7 @@
     
     <!-- Web3 -->
     <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
-    <!-- Axios for API -->
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -46,8 +40,8 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <a href="#" class="nav__logo" onclick="showSection('home'); return false;">
-                    <div class="logo-icon">⚡</div>
-                    <span class="logo-text">NanoTether</span>
+                    <div class="logo-icon">🌀</div>
+                    <span class="logo-text">TornadoFarming</span>
                 </a>
             </div>
 
@@ -105,8 +99,8 @@
             <div class="contract-badge">
                 <i class="fas fa-shield-alt"></i>
                 <span>Contract:</span>
-                <a href="https://bscscan.com/address/0x52cE1457ad7268e2Febd8332b2Db3b5618D76780#code" target="_blank">
-                    0x52...6780
+                <a href="https://bscscan.com/address/0xA5Ec5f28493e69cB5c3C2B1fE0698AaFb33fF7E9#code" target="_blank">
+                    0xA5Ec...F7E9
                 </a>
                 <i class="fas fa-external-link-alt" style="font-size: 0.625rem;"></i>
             </div>
@@ -144,15 +138,14 @@
                     <div class="hero__grid">
                         <div class="hero__content">
                             <div class="hero__badge">
-                                <i class="fas fa-shield-alt"></i>
-                                Audited by OpenZeppelin
-                                </span>
+                                <i class="fas fa-chart-line"></i>
+                                Powered by PancakeSwap V3
                             </div>
                             <h1 class="hero__title">
-                                Decentralized Yield <span class="gradient-text">Infrastructure</span>
+                                Decentralized <span class="gradient-text">Yield Farming</span>
                             </h1>
                             <p class="hero__description">
-                                Secure, Transparent and Fully On-Chain DeFi Platform Powered by Venus Protocol
+                                Secure, Transparent and Fully On-Chain DeFi Platform Powered by PancakeSwap V3 LP Position #6706667
                             </p>
                             <div class="hero__buttons">
                                 <button class="btn btn--gold btn-lg" onclick="showSection('invest')">
@@ -166,10 +159,10 @@
                             </div>
                             
                             <div class="contract-badge" style="margin-top: 1.5rem;">
-                                <i class="fas fa-shield-alt"></i>
-                                <span>Venus Protocol:</span>
-                                <a href="https://bscscan.com/address/0xfD5840Cd36d94D7229439859C0112a4185BC0255#asset-multichain" target="_blank" style="color: var(--gold);">
-                                    0xfD58...0255
+                                <i class="fas fa-chart-line"></i>
+                                <span>PancakeSwap V3 LP:</span>
+                                <a href="https://pancakeswap.info/pool/6706667" target="_blank" style="color: var(--gold);">
+                                    Position #6706667
                                 </a>
                                 <i class="fas fa-external-link-alt" style="font-size: 0.625rem;"></i>
                             </div>
@@ -178,7 +171,7 @@
                         <div class="hero__stats">
                             <div class="stats-grid">
                                 <div class="stat-card">
-                                    <div class="stat-card__icon"><i class="fas fa-lock"></i></div>
+                                    <div class="stat-card__icon"><i class="fas fa-chart-line"></i></div>
                                     <div class="stat-card__value" id="statTVL">
                                         <span class="skeleton" style="display: inline-block; width: 120px; height: 40px;"></span>
                                     </div>
@@ -197,7 +190,8 @@
                                     <li>60-day lock period (50% early withdrawal fee)</li>
                                     <li>5-level referral system (5%, 3%, 2%, 1%, 0.5%)</li>
                                     <li>5 leadership ranks with up to +1% ROI boost</li>
-                                    <li>Funds secured in Venus Protocol</li>
+                                    <li>Funds secured in PancakeSwap V3 LP</li>
+                                    <li>Base daily ROI: <strong>0.3%</strong> + rank boost</li>
                                 </ul>
                             </div>
                         </div>
@@ -282,7 +276,7 @@
                             </div>
                             <div class="investment-stat">
                                 <div class="investment-stat__value" id="invBoost">0%</div>
-                                <div class="investment-stat__label">Rank ROI Boost</div>
+                                <div class="investment-stat__label">Daily ROI Rate</div>
                             </div>
                         </div>
 
@@ -371,24 +365,28 @@
 
                             <div class="form-group">
                                 <label class="form-label">Investment Amount (USDT)</label>
-                                <input type="number" class="form-input" id="investAmount" placeholder="Enter amount" min="10" step="1" value="10">
+                                <input type="number" class="form-input" id="investAmount" placeholder="Enter amount" min="10" step="1" value="100">
                                 <div class="form-hint">Wallet Balance: <span id="usdtBalance">0.00</span> USDT</div>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Referrer Address</label>
-                                <input type="text" class="form-input" id="referrerAddress" readonly>
-                                <div class="form-hint" id="refHint"></div>
+                                <label class="form-label">Referrer Address (Optional)</label>
+                                <input type="text" class="form-input" id="referrerAddress" placeholder="0x...">
+                                <div class="form-hint" id="refHint">Leave empty if no referrer</div>
                             </div>
 
                             <div class="calculation-preview">
                                 <div class="calc-row">
-                                    <span class="calc-label">Net Deposit:</span>
+                                    <span class="calc-label">Net Deposit (after 10% fee):</span>
                                     <span class="calc-value" id="calcNet">0.00 USDT</span>
                                 </div>
                                 <div class="calc-row">
-                                    <span class="calc-label">Daily ROI:</span>
+                                    <span class="calc-label">Daily ROI (base 0.3%):</span>
                                     <span class="calc-value" id="calcDaily">0.0000 USDT</span>
+                                </div>
+                                <div class="calc-row">
+                                    <span class="calc-label">With Rank Boost:</span>
+                                    <span class="calc-value" id="calcDailyBoosted">0.0000 USDT</span>
                                 </div>
                                 <div class="calc-row">
                                     <span class="calc-label">60 Days Projection:</span>
@@ -415,15 +413,15 @@
                                     <div style="width: 32px; height: 32px; background: var(--green-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; flex-shrink: 0;">1</div>
                                     <div>
                                         <div style="font-weight: 600; margin-bottom: 0.25rem;">Deposit USDT</div>
-                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Minimum 10 USDT to start.</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Minimum 10 USDT to start. 10% management fee.</div>
                                     </div>
                                 </div>
 
                                 <div style="display: flex; gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: rgba(124, 179, 66, 0.05); border-radius: var(--radius-lg); border-left: 3px solid var(--green-accent);">
                                     <div style="width: 32px; height: 32px; background: var(--green-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; flex-shrink: 0;">2</div>
                                     <div>
-                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">Venus Protocol</div>
-                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Your deposit is supplied to Venus Protocol for yield generation.</div>
+                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">PancakeSwap V3 LP</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Your deposit is supplied to PancakeSwap V3 LP Position #6706667 for yield generation.</div>
                                     </div>
                                 </div>
 
@@ -810,11 +808,11 @@
                     <div class="info-card__content">
                         <p style="margin-bottom: 1rem;">Leadership ranks provide permanent ROI boosts on all your active deposits:</p>
                         <ul class="info-list">
-                            <li><strong>Bronze:</strong> 0.1% boost = 0.4% daily (0.3% base + 0.1%)</li>
-                            <li><strong>Silver:</strong> 0.2% boost = 0.5% daily (0.3% base + 0.2%)</li>
-                            <li><strong>Gold:</strong> 0.3% boost = 0.6% daily (0.3% base + 0.3%)</li>
-                            <li><strong>Platinum:</strong> 0.5% boost = 0.8% daily (0.3% base + 0.5%)</li>
-                            <li><strong>Diamond:</strong> 1% boost = 1.3% daily (0.3% base + 1%)</li>
+                            <li><strong>Bronze:</strong> +0.1% = 0.4% daily (0.3% base + 0.1%)</li>
+                            <li><strong>Silver:</strong> +0.2% = 0.5% daily (0.3% base + 0.2%)</li>
+                            <li><strong>Gold:</strong> +0.3% = 0.6% daily (0.3% base + 0.3%)</li>
+                            <li><strong>Platinum:</strong> +0.5% = 0.8% daily (0.3% base + 0.5%)</li>
+                            <li><strong>Diamond:</strong> +1% = 1.3% daily (0.3% base + 1%)</li>
                         </ul>
                         <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-muted);">
                             <i class="fas fa-lightbulb" style="color: var(--green-accent); margin-right: 0.5rem;"></i>
@@ -836,12 +834,12 @@
                 <div class="faq-list">
                     <div class="faq-item">
                         <div class="faq-question" onclick="toggleFaq(this)">
-                            <span class="faq-question__text">What is NanoTether and how does it work?</span>
+                            <span class="faq-question__text">What is TornadoFarming and how does it work?</span>
                             <span class="faq-icon"><i class="fas fa-chevron-down"></i></span>
                         </div>
                         <div class="faq-answer">
                             <div class="faq-answer__content">
-                                NanoTether is a decentralized yield infrastructure powered by Venus Protocol. Users deposit USDT which is then supplied to Venus Protocol to generate yields. Investors earn 0.3% base daily ROI, with additional boosts based on their leadership rank (up to +1% for Diamond Rank = 1.3% daily). The platform operates fully on-chain with transparent smart contracts audited by OpenZeppelin standards.
+                                TornadoFarming is a decentralized yield farming platform powered by PancakeSwap V3 LP Position #6706667. Users deposit USDT which is then supplied to the PancakeSwap V3 LP to generate yields. Investors earn 0.3% base daily ROI, with additional boosts based on their leadership rank (up to +1% for Diamond Rank = 1.3% daily). The platform operates fully on-chain with transparent smart contracts.
                             </div>
                         </div>
                     </div>
@@ -853,7 +851,7 @@
                         </div>
                         <div class="faq-answer">
                             <div class="faq-answer__content">
-                                The minimum investment amount is <strong>10 USDT</strong>. There is no maximum limit. A 10% management fee is deducted from each deposit (sent to the management wallet), with the remaining 90% being deposited to Venus Protocol to start generating yields immediately.
+                                The minimum investment amount is <strong>10 USDT</strong>. There is no maximum limit. A 10% management fee is deducted from each deposit (sent to the management wallet), with the remaining 90% being used for yield generation.
                             </div>
                         </div>
                     </div>
@@ -895,7 +893,7 @@
                         </div>
                         <div class="faq-answer">
                             <div class="faq-answer__content">
-                                NanoTrust offers a 5-level referral system with commissions:<br>
+                                TornadoFarming offers a 5-level referral system with commissions:<br>
                                 • <strong>Level 1 (Direct):</strong> 5%<br>
                                 • <strong>Level 2:</strong> 3%<br>
                                 • <strong>Level 3:</strong> 2%<br>
@@ -926,17 +924,17 @@
 
                     <div class="faq-item">
                         <div class="faq-question" onclick="toggleFaq(this)">
-                            <span class="faq-question__text">Is the smart contract audited and secure?</span>
+                            <span class="faq-question__text">Is the smart contract secure?</span>
                             <span class="faq-icon"><i class="fas fa-chevron-down"></i></span>
                         </div>
                         <div class="faq-answer">
                             <div class="faq-answer__content">
-                                Yes, NanoTether uses OpenZeppelin's battle-tested contracts including ReentrancyGuard and SafeERC20. The contract includes security features like:<br>
+                                Yes, TornadoFarming uses OpenZeppelin's battle-tested contracts including ReentrancyGuard and SafeERC20. The contract includes security features like:<br>
                                 • Reentrancy protection on all state-changing functions<br>
                                 • SafeERC20 for secure token transfers<br>
                                 • Only EOA (Externally Owned Account) restriction for investments<br><br>
                                 The contract is verified on BSCScan. However, as with any DeFi protocol, users should understand the risks involved and only invest what they can afford to lose.<br><br>
-                                <strong>Contract Address:</strong> 0x52cE1457ad7268e2Febd8332b2Db3b5618D76780
+                                <strong>Contract Address:</strong> 0xA5Ec5f28493e69cB5c3C2B1fE0698AaFb33fF7E9
                             </div>
                         </div>
                     </div>
@@ -952,9 +950,9 @@
                                 <code>(Active Deposit × (Base ROI + Rank Boost)) / 10000</code><br><br>
                                 Where:<br>
                                 • Base ROI = 30 (0.3%)<br>
-                                • ROI Boost = 0.1% - 1% depending on your rank<br>
+                                • Rank Boost = 10-100 (0.1% - 1%) depending on your rank<br>
                                 • Calculation is based on time elapsed since last claim<br><br>
-                                Example: With 1,000 USDT deposit and Gold rank (+30%):<br>
+                                Example: With 1,000 USDT deposit and Gold rank (+0.3%):<br>
                                 Daily ROI = 1000 × (30 + 30) / 10000 = 6 USDT per day (0.6%)
                             </div>
                         </div>
@@ -969,17 +967,17 @@
         <div class="container">
             <div class="footer__content">
                 <div class="nav__logo" style="margin-bottom: 0.5rem;">
-                    <div class="logo-icon">⚡</div>
-                    <span class="logo-text">NanoTether</span>
+                    <div class="logo-icon">🌀</div>
+                    <span class="logo-text">TornadoFarming</span>
                 </div>
-                <p style="color: var(--text-muted); font-size: 0.875rem;">Secure, Transparent and Fully On-Chain DeFi Platform Powered by Venus Protocol</p>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">Secure, Transparent and Fully On-Chain DeFi Platform Powered by PancakeSwap V3</p>
                 <div class="footer__social">
                 </div>
                 <div class="contract-badge" style="margin-top: 0.5rem;">
                     <i class="fas fa-shield-alt"></i>
                     <span>Contract:</span>
-                    <a href="https://bscscan.com/address/0x52cE1457ad7268e2Febd8332b2Db3b5618D76780#code" target="_blank">
-                        0x52...6780
+                    <a href="https://bscscan.com/address/0xA5Ec5f28493e69cB5c3C2B1fE0698AaFb33fF7E9#code" target="_blank">
+                        0xA5Ec...F7E9
                     </a>
                     <i class="fas fa-external-link-alt" style="font-size: 0.625rem;"></i>
                 </div>
@@ -1018,7 +1016,7 @@
                     </div>
                     <div class="tx-row">
                         <span class="tx-label">Withdrawal Fee:</span>
-                        <span id="withdrawFee" style="color: var(--red);">0.00 USDT (-50%)</span>
+                        <span id="withdrawFee" style="color: var(--red);">0.00 USDT</span>
                     </div>
                     <div class="tx-row">
                         <span class="tx-label">You Receive:</span>
