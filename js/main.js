@@ -299,13 +299,23 @@ async function loadDeposits() {
                 const pendingROI = parseFloat(web3.utils.fromWei(summary[4].toString(), 'ether'));
                 const lockEnd = parseInt(summary[5]);
                 const daysLeft = parseInt(summary[6]);
-                const dailyROI = parseInt(summary[7]);
+                
+                // PERBAIKAN: Konversi dailyROI dengan benar
+                // dailyROI dari contract adalah uint256 dalam basis points (120 = 1.2%)
+                let dailyROIValue = summary[7];
+                if (typeof dailyROIValue === 'string' || typeof dailyROIValue === 'object') {
+                    dailyROIValue = parseInt(dailyROIValue.toString());
+                }
+                
+                // PERBAIKAN: Hitung persentase dengan benar
+                // Jika dailyROI = 120 (basis points untuk 1.2%), maka 120/100 = 1.2%
+                const dailyROIPercent = (dailyROIValue / 100).toFixed(2);
+                
                 const isActive = summary[8];
                 
                 if (!isActive) continue;
                 
                 const isLocked = daysLeft > 0;
-                const dailyROIPercent = (dailyROI / 10000).toFixed(2);
                 
                 const depositCard = document.createElement('div');
                 depositCard.className = 'deposit-card';
@@ -349,7 +359,7 @@ async function loadDeposits() {
                         <button class="btn btn--success btn-sm" onclick="openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}>
                             <i class="fas fa-hand-holding-usd"></i> Claim ROI
                         </button>
-                        <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${isLocked ? 30 : 0}, ${dailyROI})">
+                        <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${isLocked ? 30 : 0}, ${dailyROIValue})">
                             <i class="fas fa-sign-out-alt"></i> Withdraw Capital
                         </button>
                     </div>
@@ -391,8 +401,8 @@ function calculateInvestment() {
     const boostPercents = [0, 0.1, 0.2, 0.3, 0.5, 1.0];
     const currentBoost = boostPercents[rank] || 0;
     
-    const fee = amount * 0.10; // 10% management fee
-    const net = amount - fee;
+    // PERBAIKAN: Net Deposit = full amount (tidak dikurangi fee untuk tampilan)
+    const net = amount;
     
     // ROI dihitung dari FULL AMOUNT (bukan net)
     const baseRate = 0.012; // 1.2%
