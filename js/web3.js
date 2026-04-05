@@ -2,7 +2,7 @@
 let web3;
 let contract;
 let usdtContract;
-let pancakeV3Contract;
+let usdcContract;
 let pancakePoolContract;
 let userAccount = null;
 let userData = null;
@@ -14,13 +14,12 @@ async function initWeb3() {
     try {
         web3 = new Web3(new Web3.providers.HttpProvider(CONFIG.BSC_RPC));
         
-        // Initialize contracts with their ABIs
+        // Initialize contracts
         contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
         usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
-        pancakeV3Contract = new web3.eth.Contract(PANCAKE_V3_ABI, CONFIG.PANCAKE_V3_NPM);
+        usdcContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDC_ADDRESS);
         pancakePoolContract = new web3.eth.Contract(PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
         
-        console.log('Web3 initialized successfully');
         return true;
     } catch (error) {
         console.error('Web3 init error:', error);
@@ -72,7 +71,7 @@ async function connectWallet() {
             web3 = new Web3(window.ethereum);
             contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
             usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
-            pancakeV3Contract = new web3.eth.Contract(PANCAKE_V3_ABI, CONFIG.PANCAKE_V3_NPM);
+            usdcContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDC_ADDRESS);
             pancakePoolContract = new web3.eth.Contract(PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
             
             localStorage.setItem('walletConnected', 'true');
@@ -112,7 +111,7 @@ function handleAccountsChanged(accounts) {
             web3 = new Web3(window.ethereum);
             contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
             usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
-            pancakeV3Contract = new web3.eth.Contract(PANCAKE_V3_ABI, CONFIG.PANCAKE_V3_NPM);
+            usdcContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDC_ADDRESS);
             pancakePoolContract = new web3.eth.Contract(PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
         }
         updateWalletUI();
@@ -148,45 +147,24 @@ function updateWalletUI() {
 // ===== LOAD TVL FROM PANCAKE V3 POOL =====
 async function loadVenusTVL() {
     try {
-        let tvlValue = 34073292.68; // Default fallback value
+        // Get USDT and USDC balance from the pool (real TVL)
+        const [usdtBalance, usdcBalance] = await Promise.all([
+            usdtContract.methods.balanceOf(CONFIG.PANCAKE_POOL_ADDRESS).call(),
+            usdcContract.methods.balanceOf(CONFIG.PANCAKE_POOL_ADDRESS).call()
+        ]);
         
-        // Try to get TVL from PancakeSwap V3 Pool directly
-        if (pancakePoolContract) {
-            try {
-                // Get liquidity from pool
-                const liquidity = await pancakePoolContract.methods.liquidity().call();
-                const slot0 = await pancakePoolContract.methods.slot0().call();
-                const sqrtPriceX96 = slot0.sqrtPriceX96;
-                
-                // Get token addresses
-                const token0 = await pancakePoolContract.methods.token0().call();
-                const token1 = await pancakePoolContract.methods.token1().call();
-                
-                // Calculate TVL from liquidity and sqrtPriceX96
-                const liquidityNum = parseFloat(liquidity);
-                const sqrtPriceNum = parseFloat(sqrtPriceX96);
-                const Q96 = Math.pow(2, 96);
-                
-                // Calculate approximate TVL
-                const calculatedTVL = (liquidityNum * sqrtPriceNum) / Q96 * 2;
-                
-                if (!isNaN(calculatedTVL) && calculatedTVL > 1000) {
-                    tvlValue = calculatedTVL;
-                    console.log('TVL fetched from pool:', tvlValue);
-                } else {
-                    console.log('Calculated TVL too low, using fallback');
-                }
-                
-            } catch (e) {
-                console.log('Could not fetch pool data directly:', e);
-            }
-        }
+        // Convert from wei (18 decimals)
+        const usdtAmount = parseFloat(web3.utils.fromWei(usdtBalance, 'ether'));
+        const usdcAmount = parseFloat(web3.utils.fromWei(usdcBalance, 'ether'));
         
-        const tvlFormatted = '$' + formatNumber(tvlValue, true);
+        // Total TVL in USD (1 USDT = $1, 1 USDC = $1)
+        const totalTVL = usdtAmount + usdcAmount;
+        
+        const tvlFormatted = '$' + formatNumber(totalTVL, true);
         document.getElementById('statTVL').innerHTML = tvlFormatted;
         
     } catch (error) {
         console.error('TVL error:', error);
-        document.getElementById('statTVL').innerHTML = '$34.07M';
+        document.getElementById('statTVL').innerHTML = 'Error loading TVL';
     }
 }
