@@ -9,12 +9,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         const urlParams = new URLSearchParams(window.location.search);
         const ref = urlParams.get('ref');
         const refInput = document.getElementById('referrerAddress');
+        const refHint = document.getElementById('refHint');
         
         if (ref && ref.match(/^0x[a-fA-F0-9]{40}$/)) {
             refInput.value = ref;
-            document.getElementById('refHint').innerHTML = 'Referrer from link detected';
+            refInput.readOnly = true;
+            refInput.style.opacity = '0.7';
+            refInput.style.cursor = 'not-allowed';
+            refHint.innerHTML = 'Referrer from link detected (locked)';
+            refHint.style.color = 'var(--green-accent)';
         } else {
-            document.getElementById('refHint').innerHTML = 'Leave empty if no referrer';
+            refInput.value = '';
+            refInput.readOnly = false;
+            refInput.style.opacity = '1';
+            refInput.style.cursor = 'text';
+            refHint.innerHTML = 'Not detected - leave empty if no referrer';
+            refHint.style.color = 'var(--text-muted)';
         }
         
         // Auto-connect if previously connected
@@ -63,6 +73,9 @@ async function loadUserData() {
                 document.getElementById('remainingSlotsHint').innerHTML = `Remaining deposit slots: ${remainingSlots} / 50`;
             } catch(e) {}
             
+            // Load deposits even if user doesn't exist (they might have deposits but not registered properly)
+            await loadDeposits();
+            
             return;
         }
         
@@ -100,9 +113,14 @@ async function loadUserData() {
             }
         } catch(e) {}
         
+        // Load deposits
+        await loadDeposits();
+        
     } catch (error) {
         console.error('Load user data error:', error);
         showNotification('Error loading data', 'warning');
+        // Still try to load deposits
+        await loadDeposits();
     }
 }
 
@@ -253,85 +271,99 @@ async function loadDeposits() {
         const noDepositsMsg = document.getElementById('noDepositsMessage');
         
         if (!depositIds || depositIds.length === 0) {
-            noDepositsMsg.style.display = 'block';
+            if (noDepositsMsg) noDepositsMsg.style.display = 'block';
+            if (depositsList) depositsList.innerHTML = '';
             return;
         }
         
-        noDepositsMsg.style.display = 'none';
-        depositsList.innerHTML = '';
+        if (noDepositsMsg) noDepositsMsg.style.display = 'none';
+        if (depositsList) depositsList.innerHTML = '';
         
         for (const depositId of depositIds) {
-            const summary = await contract.methods.getDepositSummary(userAccount, depositId).call();
-            
-            const id = parseInt(summary[0]);
-            const amount = parseFloat(web3.utils.fromWei(summary[1].toString(), 'ether'));
-            const depositTime = parseInt(summary[2]);
-            const lastClaimTime = parseInt(summary[3]);
-            const pendingROI = parseFloat(web3.utils.fromWei(summary[4].toString(), 'ether'));
-            const lockEnd = parseInt(summary[5]);
-            const daysLeft = parseInt(summary[6]);
-            const dailyROI = parseInt(summary[7]);
-            const isActive = summary[8];
-            
-            if (!isActive) continue;
-            
-            const isLocked = daysLeft > 0;
-            const dailyROIPercent = (dailyROI / 10000 * 100).toFixed(2);
-            
-            const depositCard = `
-                <div class="deposit-card">
-                    <div class="deposit-card__header">
-                        <div>
-                            <span class="deposit-id">#${id}</span>
-                            <span class="deposit-status ${isLocked ? 'locked' : 'unlocked'}">
-                                ${isLocked ? `🔒 Locked (${daysLeft} days left)` : '🔓 Unlocked'}
-                            </span>
+            try {
+                const summary = await contract.methods.getDepositSummary(userAccount, depositId).call();
+                
+                if (!summary || !summary[8]) continue; // Skip if not active
+                
+                const id = parseInt(summary[0]);
+                const amount = parseFloat(web3.utils.fromWei(summary[1].toString(), 'ether'));
+                const depositTime = parseInt(summary[2]);
+                const lastClaimTime = parseInt(summary[3]);
+                const pendingROI = parseFloat(web3.utils.fromWei(summary[4].toString(), 'ether'));
+                const lockEnd = parseInt(summary[5]);
+                const daysLeft = parseInt(summary[6]);
+                const dailyROI = parseInt(summary[7]);
+                const isActive = summary[8];
+                
+                if (!isActive) continue;
+                
+                const isLocked = daysLeft > 0;
+                const dailyROIPercent = (dailyROI / 100).toFixed(2);
+                
+                const depositCard = `
+                    <div class="deposit-card">
+                        <div class="deposit-card__header">
+                            <div>
+                                <span class="deposit-id">#${id}</span>
+                                <span class="deposit-status ${isLocked ? 'locked' : 'unlocked'}">
+                                    ${isLocked ? `🔒 Locked (${daysLeft} days left)` : '🔓 Unlocked'}
+                                </span>
+                            </div>
+                            <div class="deposit-amount" style="font-size: 1.125rem; font-weight: 600;">
+                                ${amount.toFixed(2)} USDT
+                            </div>
                         </div>
-                        <div class="deposit-amount" style="font-size: 1.125rem; font-weight: 600;">
-                            ${amount.toFixed(2)} USDT
+                        
+                        <div class="deposit-stats">
+                            <div class="deposit-stat">
+                                <div class="deposit-stat__value">${dailyROIPercent}%</div>
+                                <div class="deposit-stat__label">Daily ROI Rate</div>
+                            </div>
+                            <div class="deposit-stat">
+                                <div class="deposit-stat__value">${pendingROI.toFixed(2)} USDT</div>
+                                <div class="deposit-stat__label">Pending ROI</div>
+                            </div>
+                            <div class="deposit-stat">
+                                <div class="deposit-stat__value">${new Date(depositTime * 1000).toLocaleDateString()}</div>
+                                <div class="deposit-stat__label">Start Date</div>
+                            </div>
+                            <div class="deposit-stat">
+                                <div class="deposit-stat__value">${new Date(lockEnd * 1000).toLocaleDateString()}</div>
+                                <div class="deposit-stat__label">Unlock Date</div>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-bar" style="margin: 0.5rem 0;">
+                            <div class="progress-bar-fill" style="width: ${((100 - daysLeft) / 100 * 100)}%"></div>
+                        </div>
+                        
+                        <div class="deposit-actions">
+                            <button class="btn btn--success btn-sm" onclick="openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}>
+                                <i class="fas fa-hand-holding-usd"></i> Claim ROI
+                            </button>
+                            <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${isLocked ? 30 : 0}, ${dailyROI})">
+                                <i class="fas fa-sign-out-alt"></i> Withdraw Capital
+                            </button>
                         </div>
                     </div>
-                    
-                    <div class="deposit-stats">
-                        <div class="deposit-stat">
-                            <div class="deposit-stat__value">${dailyROIPercent}%</div>
-                            <div class="deposit-stat__label">Daily ROI Rate</div>
-                        </div>
-                        <div class="deposit-stat">
-                            <div class="deposit-stat__value">${pendingROI.toFixed(2)} USDT</div>
-                            <div class="deposit-stat__label">Pending ROI</div>
-                        </div>
-                        <div class="deposit-stat">
-                            <div class="deposit-stat__value">${new Date(depositTime * 1000).toLocaleDateString()}</div>
-                            <div class="deposit-stat__label">Start Date</div>
-                        </div>
-                        <div class="deposit-stat">
-                            <div class="deposit-stat__value">${new Date(lockEnd * 1000).toLocaleDateString()}</div>
-                            <div class="deposit-stat__label">Unlock Date</div>
-                        </div>
-                    </div>
-                    
-                    <div class="progress-bar" style="margin: 0.5rem 0;">
-                        <div class="progress-bar-fill" style="width: ${((100 - daysLeft) / 100 * 100)}%"></div>
-                    </div>
-                    
-                    <div class="deposit-actions">
-                        <button class="btn btn--success btn-sm" onclick="openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}>
-                            <i class="fas fa-hand-holding-usd"></i> Claim ROI
-                        </button>
-                        <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${isLocked ? 30 : 0}, ${dailyROI})">
-                            <i class="fas fa-sign-out-alt"></i> Withdraw Capital
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            depositsList.innerHTML += depositCard;
+                `;
+                
+                depositsList.innerHTML += depositCard;
+            } catch (depositError) {
+                console.error(`Error loading deposit ${depositId}:`, depositError);
+                continue;
+            }
+        }
+        
+        if (depositsList.innerHTML === '') {
+            if (noDepositsMsg) noDepositsMsg.style.display = 'block';
         }
         
     } catch (error) {
         console.error('Load deposits error:', error);
-        showNotification('Error loading deposits', 'warning');
+        showNotification('Error loading deposits: ' + (error.message || 'Unknown error'), 'warning');
+        const noDepositsMsg = document.getElementById('noDepositsMessage');
+        if (noDepositsMsg) noDepositsMsg.style.display = 'block';
     }
 }
 
@@ -340,16 +372,30 @@ function calculateInvestment() {
     const amount = parseFloat(document.getElementById('investAmount').value) || 0;
     const boost = window.userRankBoost || 0;
     
-    const fee = amount * 0.10; // 10% management fee
+    // Daily ROI calculated from FULL amount (not after fee)
+    const baseDailyRate = 0.012; // 1.2%
+    const boostedDailyRate = baseDailyRate * (1 + boost / 1000);
+    
+    const baseDaily = amount * baseDailyRate;
+    const boostedDaily = amount * boostedDailyRate;
+    const projection100 = amount * (baseDailyRate * 100);
+    
+    // Fee calculation (for info only)
+    const fee = amount * 0.10;
     const net = amount - fee;
-    const baseRate = 0.012; // 1.2%
-    const boostedRate = baseRate * (1 + boost / 1000);
-    const boostedDaily = net * boostedRate;
-    const projection100 = boostedDaily * 100;
     
     document.getElementById('calcNet').textContent = net.toFixed(2) + ' USDT';
-    document.getElementById('calcDaily').textContent = (net * 0.012).toFixed(4) + ' USDT';
-    document.getElementById('calcDailyBoosted').textContent = boostedDaily.toFixed(4) + ' USDT';
+    document.getElementById('calcDaily').textContent = baseDaily.toFixed(4) + ' USDT';
+    
+    const boostedElement = document.getElementById('calcDailyBoosted');
+    if (boost > 0) {
+        boostedElement.textContent = boostedDaily.toFixed(4) + ' USDT';
+        boostedElement.style.color = 'var(--gold)';
+    } else {
+        boostedElement.textContent = 'Not active';
+        boostedElement.style.color = 'var(--text-muted)';
+    }
+    
     document.getElementById('calc100Days').textContent = projection100.toFixed(2) + ' USDT';
 }
 
