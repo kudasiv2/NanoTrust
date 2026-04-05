@@ -114,7 +114,7 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROI) {
                         </div>
                         <div class="tx-row">
                             <span class="tx-label">Daily ROI Rate:</span>
-                            <span>${(dailyROI / 10000 * 100).toFixed(2)}%</span>
+                            <span>${(dailyROI / 100).toFixed(2)}%</span>
                         </div>
                         <div class="tx-row">
                             <span class="tx-label">Withdrawal Fee:</span>
