@@ -1,7 +1,7 @@
 {
-  "name": "TornadoFarming",
-  "short_name": "TornadoFarming",
-  "description": "Decentralized Yield Farming Platform Powered by PancakeSwap V3",
+  "name": "CenturyWealth",
+  "short_name": "CenturyWealth",
+  "description": "Decentralized Wealth Management Platform Powered by PancakeSwap V3",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,7 +10,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%232d6a4f'/%3E%3Cpath d='M50 25 L65 40 L50 55 L35 40 Z' fill='%23f5c542'/%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%231a472c'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='%23d4af37' font-weight='bold'%3EC%3C/text%3E%3C/svg%3E",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
