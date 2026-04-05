@@ -56,7 +56,7 @@ function toggleMobileMenu() {
 }
 
 function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
+    document.getElementById(id)?.classList.remove('active');
 }
 
 function copyRefLink() {
@@ -89,6 +89,9 @@ async function estimateGasWithBuffer(method, from, value = '0') {
 
 // ===== MODAL FUNCTIONS =====
 function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROI) {
+    const modalContainer = document.getElementById('modalContainer');
+    if (!modalContainer) return;
+    
     const modalHtml = `
         <div class="modal-overlay" id="withdrawModal">
             <div class="modal">
@@ -114,7 +117,7 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROI) {
                         </div>
                         <div class="tx-row">
                             <span class="tx-label">Daily ROI Rate:</span>
-                            <span>${(dailyROI / 100).toFixed(2)}%</span>
+                            <span>${(dailyROI / 10000).toFixed(2)}%</span>
                         </div>
                         <div class="tx-row">
                             <span class="tx-label">Withdrawal Fee:</span>
@@ -140,12 +143,14 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROI) {
         </div>
     `;
     
-    let modalContainer = document.getElementById('modalContainer');
     modalContainer.innerHTML = modalHtml;
     document.getElementById('withdrawModal').classList.add('active');
 }
 
 function openClaimROIModal(depositId, pendingROI) {
+    const modalContainer = document.getElementById('modalContainer');
+    if (!modalContainer) return;
+    
     const modalHtml = `
         <div class="modal-overlay" id="claimROIModal">
             <div class="modal">
@@ -177,7 +182,6 @@ function openClaimROIModal(depositId, pendingROI) {
         </div>
     `;
     
-    let modalContainer = document.getElementById('modalContainer');
     modalContainer.innerHTML = modalHtml;
     document.getElementById('claimROIModal').classList.add('active');
 }
@@ -201,7 +205,7 @@ function setupUIEventListeners() {
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
         
-        if (sidebar.classList.contains('active')) {
+        if (sidebar?.classList.contains('active')) {
             if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
                 sidebar.classList.remove('active');
             }
@@ -212,7 +216,7 @@ function setupUIEventListeners() {
         const mobileMenu = document.getElementById('mobileMenu');
         const sidebarToggle = document.getElementById('sidebarToggle');
         
-        if (mobileMenu.classList.contains('active')) {
+        if (mobileMenu?.classList.contains('active')) {
             if (!mobileMenu.contains(event.target) && !sidebarToggle.contains(event.target)) {
                 mobileMenu.classList.remove('active');
             }
@@ -243,11 +247,11 @@ function setupUIEventListeners() {
         const mobileMenu = document.getElementById('mobileMenu');
         
         if (window.innerWidth >= 1280) {
-            sidebar.classList.add('active');
+            sidebar?.classList.add('active');
         } else {
-            sidebar.classList.remove('active');
+            sidebar?.classList.remove('active');
         }
         
-        mobileMenu.classList.remove('active');
+        mobileMenu?.classList.remove('active');
     });
 }
