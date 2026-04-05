@@ -6,16 +6,57 @@ const CONFIG = {
     PANCAKE_V3_NPM: '0x46A15B0b27311cedF172AB29E4f4766fbE7F4364', // PancakeSwap V3 NPM
     BSC_RPC: 'https://bsc-dataseed.binance.org/',
     BSC_CHAIN_ID: '0x38', // 56 in hex
-    PANCAKE_POOL_ADDRESS: '0x92b7807bF19b7DDdf89b706143896d05228f3121',
-    PANCAKE_V3_POOL_ABI: [
-        "function liquidity() view returns (uint128)",
-        "function slot0() view returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint32 feeProtocol, bool unlocked)",
-        "function token0() view returns (address)",
-        "function token1() view returns (address)"
-    ]
+    PANCAKE_POOL_ADDRESS: '0x92b7807bF19b7DDdf89b706143896d05228f3121'
 };
 
-// ===== PANCAKESWAP V3 ABI MINIMAL =====
+// ===== PANCAKESWAP V3 POOL ABI (LENGKAP UNTUK BACA DATA) =====
+const PANCAKE_V3_POOL_ABI = [
+    {
+        "inputs": [],
+        "name": "liquidity",
+        "outputs": [{"internalType": "uint128", "name": "", "type": "uint128"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "slot0",
+        "outputs": [
+            {"internalType": "uint160", "name": "sqrtPriceX96", "type": "uint160"},
+            {"internalType": "int24", "name": "tick", "type": "int24"},
+            {"internalType": "uint16", "name": "observationIndex", "type": "uint16"},
+            {"internalType": "uint16", "name": "observationCardinality", "type": "uint16"},
+            {"internalType": "uint16", "name": "observationCardinalityNext", "type": "uint16"},
+            {"internalType": "uint32", "name": "feeProtocol", "type": "uint32"},
+            {"internalType": "bool", "name": "unlocked", "type": "bool"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "token0",
+        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "token1",
+        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "fee",
+        "outputs": [{"internalType": "uint24", "name": "", "type": "uint24"}],
+        "stateMutability": "view",
+        "type": "function"
+    }
+];
+
+// ===== PANCAKESWAP V3 NPM ABI MINIMAL =====
 const PANCAKE_V3_ABI = [
     {
         "constant": true,
