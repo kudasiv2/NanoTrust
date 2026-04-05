@@ -14,12 +14,13 @@ async function initWeb3() {
     try {
         web3 = new Web3(new Web3.providers.HttpProvider(CONFIG.BSC_RPC));
         
-        // Initialize contracts
+        // Initialize contracts with their ABIs
         contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
         usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
         pancakeV3Contract = new web3.eth.Contract(PANCAKE_V3_ABI, CONFIG.PANCAKE_V3_NPM);
-        pancakePoolContract = new web3.eth.Contract(CONFIG.PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
+        pancakePoolContract = new web3.eth.Contract(PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
         
+        console.log('Web3 initialized successfully');
         return true;
     } catch (error) {
         console.error('Web3 init error:', error);
@@ -72,7 +73,7 @@ async function connectWallet() {
             contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
             usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
             pancakeV3Contract = new web3.eth.Contract(PANCAKE_V3_ABI, CONFIG.PANCAKE_V3_NPM);
-            pancakePoolContract = new web3.eth.Contract(CONFIG.PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
+            pancakePoolContract = new web3.eth.Contract(PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
             
             localStorage.setItem('walletConnected', 'true');
             updateWalletUI();
@@ -112,7 +113,7 @@ function handleAccountsChanged(accounts) {
             contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
             usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
             pancakeV3Contract = new web3.eth.Contract(PANCAKE_V3_ABI, CONFIG.PANCAKE_V3_NPM);
-            pancakePoolContract = new web3.eth.Contract(CONFIG.PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
+            pancakePoolContract = new web3.eth.Contract(PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
         }
         updateWalletUI();
         loadUserData();
@@ -147,46 +148,38 @@ function updateWalletUI() {
 // ===== LOAD TVL FROM PANCAKE V3 POOL =====
 async function loadVenusTVL() {
     try {
-        let tvlValue = 0;
+        let tvlValue = 34073292.68; // Default fallback value
         
         // Try to get TVL from PancakeSwap V3 Pool directly
-        try {
-            // Get liquidity from pool
-            const liquidity = await pancakePoolContract.methods.liquidity().call();
-            const slot0 = await pancakePoolContract.methods.slot0().call();
-            const sqrtPriceX96 = slot0.sqrtPriceX96;
-            
-            // Get token addresses
-            const token0 = await pancakePoolContract.methods.token0().call();
-            const token1 = await pancakePoolContract.methods.token1().call();
-            
-            // Calculate TVL from liquidity and sqrtPriceX96
-            // Formula: TVL = (liquidity * sqrtPriceX96) / 2^96 * 2
-            const liquidityNum = parseFloat(liquidity);
-            const sqrtPriceNum = parseFloat(sqrtPriceX96);
-            const Q96 = Math.pow(2, 96);
-            
-            // Calculate approximate TVL
-            tvlValue = (liquidityNum * sqrtPriceNum) / Q96 * 2;
-            
-            // If USDT is token1, adjust accordingly
-            if (token1.toLowerCase() === CONFIG.USDT_ADDRESS.toLowerCase()) {
-                // TVL is already in USDT terms
-            } else if (token0.toLowerCase() === CONFIG.USDT_ADDRESS.toLowerCase()) {
-                tvlValue = tvlValue;
-            } else {
-                // Fallback - use default
-                tvlValue = 34073292.68;
+        if (pancakePoolContract) {
+            try {
+                // Get liquidity from pool
+                const liquidity = await pancakePoolContract.methods.liquidity().call();
+                const slot0 = await pancakePoolContract.methods.slot0().call();
+                const sqrtPriceX96 = slot0.sqrtPriceX96;
+                
+                // Get token addresses
+                const token0 = await pancakePoolContract.methods.token0().call();
+                const token1 = await pancakePoolContract.methods.token1().call();
+                
+                // Calculate TVL from liquidity and sqrtPriceX96
+                const liquidityNum = parseFloat(liquidity);
+                const sqrtPriceNum = parseFloat(sqrtPriceX96);
+                const Q96 = Math.pow(2, 96);
+                
+                // Calculate approximate TVL
+                const calculatedTVL = (liquidityNum * sqrtPriceNum) / Q96 * 2;
+                
+                if (!isNaN(calculatedTVL) && calculatedTVL > 1000) {
+                    tvlValue = calculatedTVL;
+                    console.log('TVL fetched from pool:', tvlValue);
+                } else {
+                    console.log('Calculated TVL too low, using fallback');
+                }
+                
+            } catch (e) {
+                console.log('Could not fetch pool data directly:', e);
             }
-            
-            // Ensure value is reasonable
-            if (isNaN(tvlValue) || tvlValue < 1000) {
-                tvlValue = 34073292.68;
-            }
-            
-        } catch (e) {
-            console.log('Could not fetch pool data directly, using fallback');
-            tvlValue = 34073292.68;
         }
         
         const tvlFormatted = '$' + formatNumber(tvlValue, true);
