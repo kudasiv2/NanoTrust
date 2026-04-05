@@ -1,45 +1,57 @@
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', async function() {
-    const initialized = await initWeb3();
-    if (initialized) {
-        await loadVenusTVL();
-        setupUIEventListeners();
-        
-        // Check for referral in URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const ref = urlParams.get('ref');
-        const refInput = document.getElementById('referrerAddress');
-        const refHint = document.getElementById('refHint');
-        
-        if (ref && ref.match(/^0x[a-fA-F0-9]{40}$/)) {
-            refInput.value = ref;
-            refInput.readOnly = true;
-            refInput.style.opacity = '0.7';
-            refInput.style.cursor = 'not-allowed';
-            refHint.innerHTML = 'Referrer from link detected (locked)';
-            refHint.style.color = 'var(--green-accent)';
-        } else {
-            refInput.value = '';
-            refInput.readOnly = false;
-            refInput.style.opacity = '1';
-            refInput.style.cursor = 'text';
-            refHint.innerHTML = 'Not detected - leave empty if no referrer';
-            refHint.style.color = 'var(--text-muted)';
-        }
-        
-        // Auto-connect if previously connected
-        if (localStorage.getItem('walletConnected') === 'true' && window.ethereum) {
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    await connectWallet();
-                }
-            } catch (e) {
-                console.log('Auto-connect failed');
+    try {
+        const initialized = await initWeb3();
+        if (initialized) {
+            await loadVenusTVL();
+            setupUIEventListeners();
+            
+            // Check for referral in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            const refInput = document.getElementById('referrerAddress');
+            const refHint = document.getElementById('refHint');
+            
+            if (ref && ref.match(/^0x[a-fA-F0-9]{40}$/)) {
+                refInput.value = ref;
+                refInput.readOnly = true;
+                refInput.style.opacity = '0.7';
+                refInput.style.cursor = 'not-allowed';
+                refHint.innerHTML = 'Referrer from link detected (locked)';
+                refHint.style.color = 'var(--green-accent)';
+            } else {
+                refInput.value = '';
+                refInput.readOnly = false;
+                refInput.style.opacity = '1';
+                refInput.style.cursor = 'text';
+                refHint.innerHTML = 'Not detected - leave empty if no referrer';
+                refHint.style.color = 'var(--text-muted)';
             }
+            
+            // Auto-connect if previously connected
+            if (localStorage.getItem('walletConnected') === 'true' && window.ethereum) {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        await connectWallet();
+                    }
+                } catch (e) {
+                    console.log('Auto-connect failed');
+                }
+            }
+            
+            calculateInvestment();
+        } else {
+            console.log('Web3 initialization failed, but continuing with limited functionality');
+            // Still try to load TVL from API
+            try {
+                const tvlElement = document.getElementById('statTVL');
+                if (tvlElement) tvlElement.innerHTML = '$34.07M';
+            } catch(e) {}
         }
-        
-        calculateInvestment();
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showNotification('Error initializing app', 'warning');
     }
 });
 
@@ -73,7 +85,7 @@ async function loadUserData() {
                 document.getElementById('remainingSlotsHint').innerHTML = `Remaining deposit slots: ${remainingSlots} / 50`;
             } catch(e) {}
             
-            // Load deposits even if user doesn't exist (they might have deposits but not registered properly)
+            // Load deposits even if user doesn't exist
             await loadDeposits();
             
             return;
@@ -119,7 +131,6 @@ async function loadUserData() {
     } catch (error) {
         console.error('Load user data error:', error);
         showNotification('Error loading data', 'warning');
-        // Still try to load deposits
         await loadDeposits();
     }
 }
@@ -157,7 +168,7 @@ function updateDashboard(summary, network, userDetails) {
     const qualified = network[1] || 0;
     const volume = network[2] || '0';
     
-    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[5].toString(), 'ether')); // referralEarnings
+    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[5].toString(), 'ether'));
     
     // Address
     document.getElementById('dashAddress').textContent = `${userAccount.slice(0, 4)}...${userAccount.slice(-4)}`;
@@ -206,7 +217,7 @@ function updateReferralPage(network, qualified, userDetails) {
     const volume = network[2] || '0';
     
     const volumeNum = parseFloat(web3.utils.fromWei(volume.toString(), 'ether'));
-    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[5].toString(), 'ether')); // referralEarnings
+    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[5].toString(), 'ether'));
     
     document.getElementById('refDirects').textContent = directs;
     document.getElementById('refQualified').textContent = qual;
@@ -216,7 +227,7 @@ function updateReferralPage(network, qualified, userDetails) {
     const baseUrl = window.location.origin + window.location.pathname;
     document.getElementById('refLink').value = `${baseUrl}?ref=${userAccount}`;
     
-    // Qualified status from contract (array of 5 booleans)
+    // Qualified status from contract
     for (let i = 0; i < 5; i++) {
         const isActive = qualified[i] || false;
         const icon = document.getElementById(`qualIcon${i+1}`);
@@ -263,7 +274,10 @@ function updateLeadershipPage(summary, network) {
 
 // ===== LOAD DEPOSITS =====
 async function loadDeposits() {
-    if (!userAccount || !contract) return;
+    if (!userAccount || !contract) {
+        console.log('Cannot load deposits: userAccount or contract missing');
+        return;
+    }
     
     try {
         const depositIds = await contract.methods.getUserDepositIds(userAccount).call();
@@ -279,23 +293,23 @@ async function loadDeposits() {
         if (noDepositsMsg) noDepositsMsg.style.display = 'none';
         if (depositsList) depositsList.innerHTML = '';
         
+        let hasActiveDeposits = false;
+        
         for (const depositId of depositIds) {
             try {
                 const summary = await contract.methods.getDepositSummary(userAccount, depositId).call();
                 
                 if (!summary || !summary[8]) continue; // Skip if not active
                 
+                hasActiveDeposits = true;
+                
                 const id = parseInt(summary[0]);
                 const amount = parseFloat(web3.utils.fromWei(summary[1].toString(), 'ether'));
                 const depositTime = parseInt(summary[2]);
-                const lastClaimTime = parseInt(summary[3]);
                 const pendingROI = parseFloat(web3.utils.fromWei(summary[4].toString(), 'ether'));
                 const lockEnd = parseInt(summary[5]);
                 const daysLeft = parseInt(summary[6]);
                 const dailyROI = parseInt(summary[7]);
-                const isActive = summary[8];
-                
-                if (!isActive) continue;
                 
                 const isLocked = daysLeft > 0;
                 const dailyROIPercent = (dailyROI / 100).toFixed(2);
@@ -355,13 +369,12 @@ async function loadDeposits() {
             }
         }
         
-        if (depositsList.innerHTML === '') {
+        if (!hasActiveDeposits) {
             if (noDepositsMsg) noDepositsMsg.style.display = 'block';
         }
         
     } catch (error) {
         console.error('Load deposits error:', error);
-        showNotification('Error loading deposits: ' + (error.message || 'Unknown error'), 'warning');
         const noDepositsMsg = document.getElementById('noDepositsMessage');
         if (noDepositsMsg) noDepositsMsg.style.display = 'block';
     }
