@@ -40,7 +40,10 @@ function showSection(sectionName) {
     });
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (userAccount) loadUserData();
+    if (userAccount) {
+        loadUserData();
+        if (sectionName === 'deposits') loadDeposits();
+    }
     if (sectionName === 'home') loadVenusTVL();
 }
 
@@ -65,42 +68,118 @@ function copyRefLink() {
 
 function toggleFaq(element) {
     const item = element.parentElement;
+    const isActive = item.classList.contains('active');
     document.querySelectorAll('.faq-item').forEach(faq => faq.classList.remove('active'));
-    if (!item.classList.contains('active')) item.classList.add('active');
+    if (!isActive) item.classList.add('active');
+}
+
+// Helper function for gas estimation with 20% buffer
+async function estimateGasWithBuffer(method, from, value = '0') {
+    try {
+        const gasEstimate = await method.estimateGas({ from, value });
+        const gasWithBuffer = Math.ceil(Number(gasEstimate) * 1.2);
+        const gasLimit = Math.min(gasWithBuffer, 3000000);
+        console.log(`Gas estimate: ${gasEstimate}, with buffer: ${gasLimit}`);
+        return gasLimit;
+    } catch (error) {
+        console.error('Gas estimation failed:', error);
+        return 500000;
+    }
 }
 
 // ===== MODAL FUNCTIONS =====
-function openWithdrawModal() {
-    if (!userAccount || !userData) return;
+function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROI) {
+    const modalHtml = `
+        <div class="modal-overlay" id="withdrawModal">
+            <div class="modal">
+                <div class="modal__header">
+                    <h3 class="modal__title">Withdraw Deposit #${depositId}</h3>
+                    <button class="modal__close" onclick="closeModal('withdrawModal')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="withdrawContent">
+                    <div class="alert alert--${isLocked ? 'warning' : 'info'}" style="margin-bottom: 1rem;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>${isLocked ? 'Early withdrawal will incur a 30% fee!' : 'No withdrawal fee - Lock period complete!'}</span>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9375rem;">
+                        You are about to withdraw deposit #${depositId}. 
+                        ${isLocked ? 'Since your 100-day lock period is not complete, 30% of your deposit will be deducted as an early withdrawal fee.' : 'Your lock period is complete. You can withdraw without fees.'}
+                    </p>
+                    <div class="tx-breakdown" style="margin-bottom: 1.5rem;">
+                        <div class="tx-row">
+                            <span class="tx-label">Deposit Amount:</span>
+                            <span id="withdrawAmount">${amount.toFixed(2)} USDT</span>
+                        </div>
+                        <div class="tx-row">
+                            <span class="tx-label">Daily ROI Rate:</span>
+                            <span>${(dailyROI / 10000 * 100).toFixed(2)}%</span>
+                        </div>
+                        <div class="tx-row">
+                            <span class="tx-label">Withdrawal Fee:</span>
+                            <span id="withdrawFee" style="color: var(--red);">${(amount * feePercent / 100).toFixed(2)} USDT (${feePercent}%)</span>
+                        </div>
+                        <div class="tx-row">
+                            <span class="tx-label">You Receive (Capital):</span>
+                            <span id="withdrawReceive" style="color: var(--gold);">${(amount * (100 - feePercent) / 100).toFixed(2)} USDT</span>
+                        </div>
+                        <div class="tx-row">
+                            <span class="tx-label">Pending ROI to Claim:</span>
+                            <span id="withdrawROI" style="color: var(--green-accent);">Will be claimed separately</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn btn--secondary" style="flex: 1;" onclick="closeModal('withdrawModal')">Cancel</button>
+                        <button class="btn btn--danger" style="flex: 1;" onclick="confirmWithdraw(${depositId})">
+                            <i class="fas fa-sign-out-alt"></i> Confirm Withdraw
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
     
-    const activeDeposit = userData.summary[0];
-    const feePercent = userData.fee ? userData.fee[0] : 0;
-    const feeAmount = userData.fee ? userData.fee[1] : '0';
-    
-    const activeNum = parseFloat(web3.utils.fromWei(activeDeposit.toString(), 'ether'));
-    if (activeNum < 0.01) {
-        showNotification('No active deposit to withdraw', 'error');
-        return;
-    }
-    
-    const feeNum = parseFloat(web3.utils.fromWei(feeAmount.toString(), 'ether'));
-    const receiveNum = activeNum - feeNum;
-    
-    document.getElementById('withdrawAmount').textContent = activeNum.toFixed(2) + ' USDT';
-    document.getElementById('withdrawFee').textContent = `${feeNum.toFixed(2)} USDT (${parseInt(feePercent)}%)`;
-    document.getElementById('withdrawReceive').textContent = receiveNum.toFixed(2) + ' USDT';
-    
-    if (parseInt(feePercent) === 0) {
-        document.getElementById('withdrawWarningText').textContent = 'No withdrawal fee!';
-        document.getElementById('withdrawWarningText').parentElement.className = 'alert alert--info';
-        document.getElementById('withdrawFeeExplanation').textContent = 'Lock period complete. You can withdraw without fees.';
-    } else {
-        document.getElementById('withdrawWarningText').textContent = 'Early withdrawal 50% fee!';
-        document.getElementById('withdrawWarningText').parentElement.className = 'alert alert--warning';
-        document.getElementById('withdrawFeeExplanation').textContent = '50% early withdrawal fee applies.';
-    }
-    
+    let modalContainer = document.getElementById('modalContainer');
+    modalContainer.innerHTML = modalHtml;
     document.getElementById('withdrawModal').classList.add('active');
+}
+
+function openClaimROIModal(depositId, pendingROI) {
+    const modalHtml = `
+        <div class="modal-overlay" id="claimROIModal">
+            <div class="modal">
+                <div class="modal__header">
+                    <h3 class="modal__title">Claim ROI - Deposit #${depositId}</h3>
+                    <button class="modal__close" onclick="closeModal('claimROIModal')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div>
+                    <div class="alert alert--info" style="margin-bottom: 1rem;">
+                        <i class="fas fa-info-circle"></i>
+                        <span>You are about to claim your pending ROI</span>
+                    </div>
+                    <div class="tx-breakdown" style="margin-bottom: 1.5rem;">
+                        <div class="tx-row">
+                            <span class="tx-label">Pending ROI:</span>
+                            <span style="color: var(--gold); font-weight: 600;">${pendingROI.toFixed(2)} USDT</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn btn--secondary" style="flex: 1;" onclick="closeModal('claimROIModal')">Cancel</button>
+                        <button class="btn btn--gold" style="flex: 1;" onclick="confirmClaimROI(${depositId})">
+                            <i class="fas fa-hand-holding-usd"></i> Confirm Claim
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    let modalContainer = document.getElementById('modalContainer');
+    modalContainer.innerHTML = modalHtml;
+    document.getElementById('claimROIModal').classList.add('active');
 }
 
 // ===== EVENT LISTENERS =====
