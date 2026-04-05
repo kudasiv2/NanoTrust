@@ -4,12 +4,12 @@ const CONFIG = {
     USDT_ADDRESS: '0x55d398326f99059fF775485246999027B3197955', // BSC USDT
     USDC_ADDRESS: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', // BSC USDC
     PANCAKE_V3_NPM: '0x46A15B0b27311cedF172AB29E4f4766fbE7F4364', // PancakeSwap V3 NPM
+    PANCAKE_POOL_ADDRESS: '0x92b7807bF19b7DDdf89b706143896d05228f3121', // USDT/USDC Pool
     BSC_RPC: 'https://bsc-dataseed.binance.org/',
     BSC_CHAIN_ID: '0x38', // 56 in hex
-    PANCAKE_POOL_ADDRESS: '0x92b7807bF19b7DDdf89b706143896d05228f3121'
 };
 
-// ===== PANCAKESWAP V3 POOL ABI (LENGKAP UNTUK BACA DATA) =====
+// ===== PANCAKESWAP V3 POOL ABI MINIMAL (untuk TVL) =====
 const PANCAKE_V3_POOL_ABI = [
     {
         "inputs": [],
@@ -30,27 +30,6 @@ const PANCAKE_V3_POOL_ABI = [
             {"internalType": "uint32", "name": "feeProtocol", "type": "uint32"},
             {"internalType": "bool", "name": "unlocked", "type": "bool"}
         ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "token0",
-        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "token1",
-        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "fee",
-        "outputs": [{"internalType": "uint24", "name": "", "type": "uint24"}],
         "stateMutability": "view",
         "type": "function"
     }
