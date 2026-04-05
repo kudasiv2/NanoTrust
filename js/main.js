@@ -1,57 +1,43 @@
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        const initialized = await initWeb3();
-        if (initialized) {
-            await loadVenusTVL();
-            setupUIEventListeners();
-            
-            // Check for referral in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const ref = urlParams.get('ref');
-            const refInput = document.getElementById('referrerAddress');
-            const refHint = document.getElementById('refHint');
-            
-            if (ref && ref.match(/^0x[a-fA-F0-9]{40}$/)) {
-                refInput.value = ref;
-                refInput.readOnly = true;
-                refInput.style.opacity = '0.7';
-                refInput.style.cursor = 'not-allowed';
-                refHint.innerHTML = 'Referrer from link detected (locked)';
-                refHint.style.color = 'var(--green-accent)';
-            } else {
-                refInput.value = '';
-                refInput.readOnly = false;
-                refInput.style.opacity = '1';
-                refInput.style.cursor = 'text';
-                refHint.innerHTML = 'Not detected - leave empty if no referrer';
-                refHint.style.color = 'var(--text-muted)';
+    const initialized = await initWeb3();
+    if (initialized) {
+        await loadVenusTVL();
+        setupUIEventListeners();
+        
+        // Check for referral in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+        const refInput = document.getElementById('referrerAddress');
+        const refDisplay = document.getElementById('refDisplay');
+        
+        if (ref && ref.match(/^0x[a-fA-F0-9]{40}$/)) {
+            if(refInput) refInput.value = ref;
+            if(refDisplay) {
+                refDisplay.textContent = ref.substring(0, 6) + '...' + ref.substring(38);
+                refDisplay.classList.add('has-referrer');
             }
-            
-            // Auto-connect if previously connected
-            if (localStorage.getItem('walletConnected') === 'true' && window.ethereum) {
-                try {
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    if (accounts.length > 0) {
-                        await connectWallet();
-                    }
-                } catch (e) {
-                    console.log('Auto-connect failed');
-                }
-            }
-            
-            calculateInvestment();
         } else {
-            console.log('Web3 initialization failed, but continuing with limited functionality');
-            // Still try to load TVL from API
-            try {
-                const tvlElement = document.getElementById('statTVL');
-                if (tvlElement) tvlElement.innerHTML = '$34.07M';
-            } catch(e) {}
+            if(refInput) refInput.value = '0x0000000000000000000000000000000000000000';
+            if(refDisplay) {
+                refDisplay.textContent = 'Not detected';
+                refDisplay.classList.remove('has-referrer');
+            }
         }
-    } catch (error) {
-        console.error('Initialization error:', error);
-        showNotification('Error initializing app', 'warning');
+        
+        // Auto-connect if previously connected
+        if (localStorage.getItem('walletConnected') === 'true' && window.ethereum) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    await connectWallet();
+                }
+            } catch (e) {
+                console.log('Auto-connect failed');
+            }
+        }
+        
+        calculateInvestment();
     }
 });
 
@@ -84,9 +70,6 @@ async function loadUserData() {
                 const remainingSlots = await contract.methods.getRemainingDepositSlots(userAccount).call();
                 document.getElementById('remainingSlotsHint').innerHTML = `Remaining deposit slots: ${remainingSlots} / 50`;
             } catch(e) {}
-            
-            // Load deposits even if user doesn't exist
-            await loadDeposits();
             
             return;
         }
@@ -125,13 +108,9 @@ async function loadUserData() {
             }
         } catch(e) {}
         
-        // Load deposits
-        await loadDeposits();
-        
     } catch (error) {
         console.error('Load user data error:', error);
         showNotification('Error loading data', 'warning');
-        await loadDeposits();
     }
 }
 
@@ -168,7 +147,7 @@ function updateDashboard(summary, network, userDetails) {
     const qualified = network[1] || 0;
     const volume = network[2] || '0';
     
-    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[5].toString(), 'ether'));
+    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[5].toString(), 'ether')); // referralEarnings
     
     // Address
     document.getElementById('dashAddress').textContent = `${userAccount.slice(0, 4)}...${userAccount.slice(-4)}`;
@@ -204,8 +183,7 @@ function updateDashboard(summary, network, userDetails) {
 function updateInvestPage(summary) {
     if (!summary) return;
     const rank = parseInt(summary[3] || 0);
-    const boosts = [0, 10, 20, 30, 50, 100];
-    window.userRankBoost = boosts[rank] || 0;
+    window.userRank = rank; // Save for calculation
     calculateInvestment();
 }
 
@@ -217,7 +195,7 @@ function updateReferralPage(network, qualified, userDetails) {
     const volume = network[2] || '0';
     
     const volumeNum = parseFloat(web3.utils.fromWei(volume.toString(), 'ether'));
-    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[5].toString(), 'ether'));
+    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[5].toString(), 'ether')); // referralEarnings
     
     document.getElementById('refDirects').textContent = directs;
     document.getElementById('refQualified').textContent = qual;
@@ -227,7 +205,7 @@ function updateReferralPage(network, qualified, userDetails) {
     const baseUrl = window.location.origin + window.location.pathname;
     document.getElementById('refLink').value = `${baseUrl}?ref=${userAccount}`;
     
-    // Qualified status from contract
+    // Qualified status from contract (array of 5 booleans)
     for (let i = 0; i < 5; i++) {
         const isActive = qualified[i] || false;
         const icon = document.getElementById(`qualIcon${i+1}`);
@@ -275,140 +253,168 @@ function updateLeadershipPage(summary, network) {
 // ===== LOAD DEPOSITS =====
 async function loadDeposits() {
     if (!userAccount || !contract) {
-        console.log('Cannot load deposits: userAccount or contract missing');
+        console.error('Wallet not connected or contract not initialized');
         return;
     }
     
     try {
+        console.log('Loading deposits for:', userAccount);
+        
+        // Check if method exists
+        if (!contract.methods.getUserDepositIds) {
+            throw new Error('getUserDepositIds method not found in contract');
+        }
+        
         const depositIds = await contract.methods.getUserDepositIds(userAccount).call();
+        console.log('Deposit IDs:', depositIds);
+        
         const depositsList = document.getElementById('depositsList');
         const noDepositsMsg = document.getElementById('noDepositsMessage');
         
-        if (!depositIds || depositIds.length === 0) {
-            if (noDepositsMsg) noDepositsMsg.style.display = 'block';
-            if (depositsList) depositsList.innerHTML = '';
+        if (!depositsList) {
+            console.error('depositsList element not found');
             return;
         }
         
-        if (noDepositsMsg) noDepositsMsg.style.display = 'none';
-        if (depositsList) depositsList.innerHTML = '';
+        // Clear list tapi pertahankan noDepositsMessage
+        depositsList.innerHTML = '';
+        depositsList.appendChild(noDepositsMsg);
         
-        let hasActiveDeposits = false;
+        if (!depositIds || depositIds.length === 0) {
+            noDepositsMsg.style.display = 'block';
+            return;
+        }
+        
+        noDepositsMsg.style.display = 'none';
         
         for (const depositId of depositIds) {
             try {
                 const summary = await contract.methods.getDepositSummary(userAccount, depositId).call();
-                
-                if (!summary || !summary[8]) continue; // Skip if not active
-                
-                hasActiveDeposits = true;
+                console.log(`Deposit ${depositId} summary:`, summary);
                 
                 const id = parseInt(summary[0]);
                 const amount = parseFloat(web3.utils.fromWei(summary[1].toString(), 'ether'));
                 const depositTime = parseInt(summary[2]);
+                const lastClaimTime = parseInt(summary[3]);
                 const pendingROI = parseFloat(web3.utils.fromWei(summary[4].toString(), 'ether'));
                 const lockEnd = parseInt(summary[5]);
                 const daysLeft = parseInt(summary[6]);
                 const dailyROI = parseInt(summary[7]);
+                const isActive = summary[8];
+                
+                if (!isActive) continue;
                 
                 const isLocked = daysLeft > 0;
-                const dailyROIPercent = (dailyROI / 100).toFixed(2);
+                const dailyROIPercent = (dailyROI / 10000).toFixed(2);
                 
-                const depositCard = `
-                    <div class="deposit-card">
-                        <div class="deposit-card__header">
-                            <div>
-                                <span class="deposit-id">#${id}</span>
-                                <span class="deposit-status ${isLocked ? 'locked' : 'unlocked'}">
-                                    ${isLocked ? `🔒 Locked (${daysLeft} days left)` : '🔓 Unlocked'}
-                                </span>
-                            </div>
-                            <div class="deposit-amount" style="font-size: 1.125rem; font-weight: 600;">
-                                ${amount.toFixed(2)} USDT
-                            </div>
+                const depositCard = document.createElement('div');
+                depositCard.className = 'deposit-card';
+                depositCard.innerHTML = `
+                    <div class="deposit-card__header">
+                        <div>
+                            <span class="deposit-id">#${id}</span>
+                            <span class="deposit-status ${isLocked ? 'locked' : 'unlocked'}">
+                                ${isLocked ? '🔒 Locked (' + daysLeft + ' days left)' : '🔓 Unlocked'}
+                            </span>
                         </div>
-                        
-                        <div class="deposit-stats">
-                            <div class="deposit-stat">
-                                <div class="deposit-stat__value">${dailyROIPercent}%</div>
-                                <div class="deposit-stat__label">Daily ROI Rate</div>
-                            </div>
-                            <div class="deposit-stat">
-                                <div class="deposit-stat__value">${pendingROI.toFixed(2)} USDT</div>
-                                <div class="deposit-stat__label">Pending ROI</div>
-                            </div>
-                            <div class="deposit-stat">
-                                <div class="deposit-stat__value">${new Date(depositTime * 1000).toLocaleDateString()}</div>
-                                <div class="deposit-stat__label">Start Date</div>
-                            </div>
-                            <div class="deposit-stat">
-                                <div class="deposit-stat__value">${new Date(lockEnd * 1000).toLocaleDateString()}</div>
-                                <div class="deposit-stat__label">Unlock Date</div>
-                            </div>
+                        <div class="deposit-amount" style="font-size: 1.125rem; font-weight: 600;">
+                            ${amount.toFixed(2)} USDT
                         </div>
-                        
-                        <div class="progress-bar" style="margin: 0.5rem 0;">
-                            <div class="progress-bar-fill" style="width: ${((100 - daysLeft) / 100 * 100)}%"></div>
+                    </div>
+                    
+                    <div class="deposit-stats">
+                        <div class="deposit-stat">
+                            <div class="deposit-stat__value">${dailyROIPercent}%</div>
+                            <div class="deposit-stat__label">Daily ROI Rate</div>
                         </div>
-                        
-                        <div class="deposit-actions">
-                            <button class="btn btn--success btn-sm" onclick="openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}>
-                                <i class="fas fa-hand-holding-usd"></i> Claim ROI
-                            </button>
-                            <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${isLocked ? 30 : 0}, ${dailyROI})">
-                                <i class="fas fa-sign-out-alt"></i> Withdraw Capital
-                            </button>
+                        <div class="deposit-stat">
+                            <div class="deposit-stat__value">${pendingROI.toFixed(2)} USDT</div>
+                            <div class="deposit-stat__label">Pending ROI</div>
                         </div>
+                        <div class="deposit-stat">
+                            <div class="deposit-stat__value">${new Date(depositTime * 1000).toLocaleDateString()}</div>
+                            <div class="deposit-stat__label">Start Date</div>
+                        </div>
+                        <div class="deposit-stat">
+                            <div class="deposit-stat__value">${new Date(lockEnd * 1000).toLocaleDateString()}</div>
+                            <div class="deposit-stat__label">Unlock Date</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar" style="margin: 0.5rem 0;">
+                        <div class="progress-bar-fill" style="width: ${((100 - daysLeft) / 100 * 100)}%"></div>
+                    </div>
+                    
+                    <div class="deposit-actions">
+                        <button class="btn btn--success btn-sm" onclick="openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}>
+                            <i class="fas fa-hand-holding-usd"></i> Claim ROI
+                        </button>
+                        <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${isLocked ? 30 : 0}, ${dailyROI})">
+                            <i class="fas fa-sign-out-alt"></i> Withdraw Capital
+                        </button>
                     </div>
                 `;
                 
-                depositsList.innerHTML += depositCard;
-            } catch (depositError) {
-                console.error(`Error loading deposit ${depositId}:`, depositError);
-                continue;
+                depositsList.appendChild(depositCard);
+            } catch (err) {
+                console.error(`Error loading deposit ${depositId}:`, err);
             }
-        }
-        
-        if (!hasActiveDeposits) {
-            if (noDepositsMsg) noDepositsMsg.style.display = 'block';
         }
         
     } catch (error) {
         console.error('Load deposits error:', error);
-        const noDepositsMsg = document.getElementById('noDepositsMessage');
-        if (noDepositsMsg) noDepositsMsg.style.display = 'block';
+        showNotification('Error loading deposits: ' + error.message, 'error');
+        
+        // Tampilkan pesan error di UI
+        const depositsList = document.getElementById('depositsList');
+        if (depositsList) {
+            depositsList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state__icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <p>Error loading deposits</p>
+                    <p style="font-size: 0.875rem; color: var(--text-muted);">${error.message}</p>
+                    <button class="btn btn--primary" onclick="loadDeposits()" style="margin-top: 1rem;">
+                        <i class="fas fa-sync"></i> Retry
+                    </button>
+                </div>
+            `;
+        }
     }
 }
 
 // ===== INVESTMENT FUNCTIONS =====
 function calculateInvestment() {
     const amount = parseFloat(document.getElementById('investAmount').value) || 0;
-    const boost = window.userRankBoost || 0;
+    const rank = window.userRank || 0;
     
-    // Daily ROI calculated from FULL amount (not after fee)
-    const baseDailyRate = 0.012; // 1.2%
-    const boostedDailyRate = baseDailyRate * (1 + boost / 1000);
+    // Boost dalam persen (0.1%, 0.2%, 0.3%, 0.5%, 1.0%)
+    const boostPercents = [0, 0.1, 0.2, 0.3, 0.5, 1.0];
+    const currentBoost = boostPercents[rank] || 0;
     
-    const baseDaily = amount * baseDailyRate;
-    const boostedDaily = amount * boostedDailyRate;
-    const projection100 = amount * (baseDailyRate * 100);
-    
-    // Fee calculation (for info only)
-    const fee = amount * 0.10;
+    const fee = amount * 0.10; // 10% management fee
     const net = amount - fee;
     
-    document.getElementById('calcNet').textContent = net.toFixed(2) + ' USDT';
-    document.getElementById('calcDaily').textContent = baseDaily.toFixed(4) + ' USDT';
+    // ROI dihitung dari FULL AMOUNT (bukan net)
+    const baseRate = 0.012; // 1.2%
+    const dailyROI = amount * baseRate; // 1.2% dari full amount
     
-    const boostedElement = document.getElementById('calcDailyBoosted');
-    if (boost > 0) {
-        boostedElement.textContent = boostedDaily.toFixed(4) + ' USDT';
-        boostedElement.style.color = 'var(--gold)';
-    } else {
-        boostedElement.textContent = 'Not active';
-        boostedElement.style.color = 'var(--text-muted)';
+    // With Rank Boost
+    let boostedDaily = 0;
+    let boostText = 'Not active';
+    
+    if (currentBoost > 0) {
+        const totalRate = baseRate + (currentBoost / 100);
+        boostedDaily = amount * totalRate;
+        boostText = boostedDaily.toFixed(4) + ' USDT';
     }
     
+    // 100 Days Projection
+    const projection100 = boostedDaily > 0 ? boostedDaily * 100 : dailyROI * 100;
+    
+    // Update UI
+    document.getElementById('calcNet').textContent = net.toFixed(2) + ' USDT';
+    document.getElementById('calcDaily').textContent = dailyROI.toFixed(4) + ' USDT';
+    document.getElementById('calcDailyBoosted').textContent = boostText;
     document.getElementById('calc100Days').textContent = projection100.toFixed(2) + ' USDT';
 }
 
@@ -425,6 +431,8 @@ async function submitInvestment() {
     }
     
     let referrer = document.getElementById('referrerAddress').value.trim();
+    
+    // Validasi referrer
     if (!referrer || referrer === '') {
         referrer = '0x0000000000000000000000000000000000000000';
     } else if (!web3.utils.isAddress(referrer)) {
@@ -497,12 +505,6 @@ async function confirmClaimROI(depositId) {
     
     closeModal('claimROIModal');
     
-    const btn = document.querySelector(`.deposit-actions button:first-child`);
-    if (btn) {
-        btn.classList.add('loading');
-        btn.innerHTML = '<span class="spinner"></span>';
-    }
-    
     try {
         const txWeb3 = new Web3(window.ethereum);
         const txContract = new txWeb3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
@@ -526,11 +528,6 @@ async function confirmClaimROI(depositId) {
         if (msg.includes('user rejected')) msg = 'Transaction cancelled';
         else if (msg.includes('ROI below minimum')) msg = 'ROI below minimum withdraw (0.1 USDT)';
         showNotification('Failed: ' + msg, 'error');
-    } finally {
-        if (btn) {
-            btn.classList.remove('loading');
-            btn.innerHTML = '<i class="fas fa-hand-holding-usd"></i> Claim ROI';
-        }
     }
 }
 
@@ -538,12 +535,6 @@ async function confirmWithdraw(depositId) {
     if (!userAccount) return;
     
     closeModal('withdrawModal');
-    
-    const btn = document.querySelector(`.deposit-actions button:last-child`);
-    if (btn) {
-        btn.classList.add('loading');
-        btn.innerHTML = '<span class="spinner"></span>';
-    }
     
     try {
         const txWeb3 = new Web3(window.ethereum);
@@ -568,11 +559,6 @@ async function confirmWithdraw(depositId) {
         if (msg.includes('user rejected')) msg = 'Transaction cancelled';
         else if (msg.includes('Insufficient balance')) msg = 'Insufficient balance to withdraw';
         showNotification('Failed: ' + msg, 'error');
-    } finally {
-        if (btn) {
-            btn.classList.remove('loading');
-            btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Withdraw Capital';
-        }
     }
 }
 
