@@ -25,7 +25,7 @@
     <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="bg-grid"></div>
@@ -196,7 +196,7 @@
                                     <li>5-level referral system (5%, 3%, 2%, 1%, 0.5%)</li>
                                     <li>5 leadership ranks with up to +1% ROI boost</li>
                                     <li>Funds secured in PancakeSwap V3 LP</li>
-                                    <li>Base daily ROI: <strong>1.2%</strong> + rank boost</li>
+                                    <li>Base daily ROI: <strong>1.2%</strong> from full amount + rank boost</li>
                                     <li>Maximum <strong>50 active deposits</strong> per wallet</li>
                                 </ul>
                             </div>
@@ -305,7 +305,7 @@
             <div class="container">
                 <div class="section__header">
                     <h2 class="section__title gradient-text">Invest</h2>
-                    <p class="section__subtitle">Start Earning Daily ROI - 1.2% Base Rate</p>
+                    <p class="section__subtitle">Start Earning Daily ROI - 1.2% Base Rate from Full Amount</p>
                 </div>
 
                 <div class="alert alert--warning" id="investWalletAlert" style="display: flex;">
@@ -332,9 +332,14 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Referrer Address (Optional)</label>
-                                <input type="text" class="form-input" id="referrerAddress" placeholder="0x...">
-                                <div class="form-hint" id="refHint">Not detected - leave empty if no referrer</div>
+                                <label class="form-label">Referrer Address</label>
+                                <div id="refDisplay" class="form-input" style="background: rgba(0, 0, 0, 0.6); color: var(--text-muted); font-family: monospace; cursor: not-allowed;">
+                                    Not detected
+                                </div>
+                                <input type="hidden" id="referrerAddress" value="0x0000000000000000000000000000000000000000">
+                                <div class="form-hint" style="color: var(--text-muted); font-size: 0.75rem;">
+                                    <i class="fas fa-lock" style="margin-right: 0.25rem;"></i>Referrer cannot be changed after detection
+                                </div>
                             </div>
 
                             <div class="calculation-preview">
@@ -343,12 +348,12 @@
                                     <span class="calc-value" id="calcNet">0.00 USDT</span>
                                 </div>
                                 <div class="calc-row">
-                                    <span class="calc-label">Daily ROI (base 1.2%):</span>
+                                    <span class="calc-label">Daily ROI (base 1.2% from full amount):</span>
                                     <span class="calc-value" id="calcDaily">0.0000 USDT</span>
                                 </div>
                                 <div class="calc-row">
                                     <span class="calc-label">With Rank Boost:</span>
-                                    <span class="calc-value" id="calcDailyBoosted">Not active</span>
+                                    <span class="calc-value" id="calcDailyBoosted" style="color: var(--text-muted);">Not active</span>
                                 </div>
                                 <div class="calc-row">
                                     <span class="calc-label">100 Days Projection:</span>
@@ -391,7 +396,7 @@
                                     <div style="width: 32px; height: 32px; background: var(--green-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; flex-shrink: 0;">3</div>
                                     <div>
                                         <div style="font-weight: 600; margin-bottom: 0.25rem;">Earn Daily ROI</div>
-                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Base 1.2% daily + Rank Boost (up to +1% = 2.2% daily).</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">Base 1.2% daily from full amount + Rank Boost (up to +1% = 2.2% daily).</div>
                                     </div>
                                 </div>
 
@@ -781,7 +786,7 @@
                         </div>
                         <div class="faq-answer">
                             <div class="faq-answer__content">
-                                CenturyWealth is a decentralized wealth management platform powered by PancakeSwap V3 LP. Users deposit USDT which is then supplied to PancakeSwap V3 LP to generate yields. Investors earn 1.2% base daily ROI, with additional boosts based on their leadership rank (up to +1% for Diamond Rank = 2.2% daily). The platform operates fully on-chain with transparent smart contracts.
+                                CenturyWealth is a decentralized wealth management platform powered by PancakeSwap V3 LP. Users deposit USDT which is then supplied to PancakeSwap V3 LP to generate yields. Investors earn 1.2% base daily ROI from the full deposit amount, with additional boosts based on their leadership rank (up to +1% for Diamond Rank = 2.2% daily). The platform operates fully on-chain with transparent smart contracts.
                             </div>
                         </div>
                     </div>
@@ -793,7 +798,7 @@
                         </div>
                         <div class="faq-answer">
                             <div class="faq-answer__content">
-                                The minimum investment amount is <strong>5 USDT</strong>. You can have up to <strong>50 active deposits</strong> per wallet. A 10% management fee is deducted from each deposit, with the remaining 90% being used for yield generation.
+                                The minimum investment amount is <strong>5 USDT</strong>. You can have up to <strong>50 active deposits</strong> per wallet. A 10% management fee is deducted from each deposit, with the remaining 90% being used for yield generation. Daily ROI is calculated from your full deposit amount (before fee).
                             </div>
                         </div>
                     </div>
@@ -823,7 +828,7 @@
                                 • <strong>Gold:</strong> 30,000 USDT team volume<br>
                                 • <strong>Platinum:</strong> 50,000 USDT team volume<br>
                                 • <strong>Diamond:</strong> 100,000 USDT team volume<br><br>
-                                Rank boosts are permanent and apply to all your active deposits.
+                                Rank boosts are permanent and apply to all your active deposits. Daily ROI is calculated from your full deposit amount (not net after fee).
                             </div>
                         </div>
                     </div>
@@ -883,11 +888,12 @@
                         <div class="faq-answer">
                             <div class="faq-answer__content">
                                 Daily ROI is calculated per deposit as:<br><br>
-                                <code>(Deposit Amount × (Base ROI + Rank Boost)) / 10000</code><br><br>
+                                <code>(Full Deposit Amount × (Base ROI + Rank Boost)) / 10000</code><br><br>
                                 Where:<br>
                                 • Base ROI = 120 (1.2%)<br>
                                 • Rank Boost = 10-100 (0.1% - 1%) depending on your rank<br>
-                                • Calculation is based on time elapsed since last claim<br><br>
+                                • Calculation is based on time elapsed since last claim<br>
+                                • ROI is calculated from your full deposit amount (not net after fee)<br><br>
                                 Example: With 1,000 USDT deposit and Gold rank (+0.3%):<br>
                                 Daily ROI = 1000 × (120 + 30) / 10000 = 15 USDT per day (1.5%)
                             </div>
@@ -929,9 +935,9 @@
     <div id="modalContainer"></div>
 
     <!-- Custom JavaScript -->
-    <script src="js/config.js"></script>
-    <script src="js/web3.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/main.js"></script>
+    <script src="config.js"></script>
+    <script src="web3.js"></script>
+    <script src="ui.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
