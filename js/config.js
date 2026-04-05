@@ -6,7 +6,13 @@ const CONFIG = {
     PANCAKE_V3_NPM: '0x46A15B0b27311cedF172AB29E4f4766fbE7F4364', // PancakeSwap V3 NPM
     BSC_RPC: 'https://bsc-dataseed.binance.org/',
     BSC_CHAIN_ID: '0x38', // 56 in hex
-    PANCAKE_POOL_ADDRESS: '0x92b7807bF19b7DDdf89b706143896d05228f3121'
+    PANCAKE_POOL_ADDRESS: '0x92b7807bF19b7DDdf89b706143896d05228f3121',
+    PANCAKE_V3_POOL_ABI: [
+        "function liquidity() view returns (uint128)",
+        "function slot0() view returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint32 feeProtocol, bool unlocked)",
+        "function token0() view returns (address)",
+        "function token1() view returns (address)"
+    ]
 };
 
 // ===== PANCAKESWAP V3 ABI MINIMAL =====
