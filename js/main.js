@@ -1,8 +1,8 @@
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', async function() {
-    const initialized = await initWeb3();
+    const initialized = await window.initWeb3();
     if (initialized) {
-        await loadVenusTVL();
+        await window.loadVenusTVL();
         setupUIEventListeners();
         
         // Check for referral in URL
@@ -30,44 +30,55 @@ document.addEventListener('DOMContentLoaded', async function() {
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_accounts' });
                 if (accounts.length > 0) {
-                    await connectWallet();
+                    await window.connectWallet();
                 }
             } catch (e) {
                 console.log('Auto-connect failed');
             }
         }
         
-        calculateInvestment();
+        window.calculateInvestment();
     }
 });
 
+// Expose functions to window
+window.loadUserData = loadUserData;
+window.loadDeposits = loadDeposits;
+window.calculateInvestment = calculateInvestment;
+window.submitInvestment = submitInvestment;
+window.confirmClaimROI = confirmClaimROI;
+window.confirmWithdraw = confirmWithdraw;
+window.claimReferral = claimReferral;
+window.openWithdrawModal = openWithdrawModal;
+window.openClaimROIModal = openClaimROIModal;
+
 // ===== LOAD USER DATA =====
 async function loadUserData() {
-    if (!userAccount || !contract) return;
+    if (!window.userAccount || !window.contract) return;
     
     try {
         // Check if user exists in contract
         let userDetails;
         try {
-            userDetails = await contract.methods.users(userAccount).call();
+            userDetails = await window.contract.methods.users(window.userAccount).call();
         } catch (e) {
             console.log('User not found');
             userDetails = null;
         }
         
         // If user doesn't exist
-        if (!userDetails || !userDetails[10]) { // exists is index 10
+        if (!userDetails || !userDetails[10]) {
             resetUserUI();
             
             // Get USDT balance
             try {
-                const balance = await usdtContract.methods.balanceOf(userAccount).call();
+                const balance = await window.usdtContract.methods.balanceOf(window.userAccount).call();
                 document.getElementById('usdtBalance').textContent = formatUSDT(balance, false);
             } catch (e) {}
             
             // Check remaining slots
             try {
-                const remainingSlots = await contract.methods.getRemainingDepositSlots(userAccount).call();
+                const remainingSlots = await window.contract.methods.getRemainingDepositSlots(window.userAccount).call();
                 document.getElementById('remainingSlotsHint').innerHTML = `Remaining deposit slots: ${remainingSlots} / 50`;
             } catch(e) {}
             
@@ -75,16 +86,16 @@ async function loadUserData() {
         }
         
         // User exists - get data
-        const summary = await contract.methods.getUserSummary(userAccount).call();
-        const network = await contract.methods.getUserNetwork(userAccount).call();
-        const qualified = await contract.methods.getQualifiedStatus(userAccount).call();
+        const summary = await window.contract.methods.getUserSummary(window.userAccount).call();
+        const network = await window.contract.methods.getUserNetwork(window.userAccount).call();
+        const qualified = await window.contract.methods.getQualifiedStatus(window.userAccount).call();
         
         // Save data
-        userData = { summary, network, qualified, userDetails };
+        window.userData = { summary, network, qualified, userDetails };
         
         // Update rank
         if (summary && summary[3] !== undefined) {
-            userRank = parseInt(summary[3]);
+            window.userRank = parseInt(summary[3]);
         }
         
         // Update UI
@@ -95,13 +106,13 @@ async function loadUserData() {
         
         // Get USDT balance
         try {
-            const balance = await usdtContract.methods.balanceOf(userAccount).call();
+            const balance = await window.usdtContract.methods.balanceOf(window.userAccount).call();
             document.getElementById('usdtBalance').textContent = formatUSDT(balance, false);
         } catch (e) {}
         
         // Check remaining slots
         try {
-            const remainingSlots = await contract.methods.getRemainingDepositSlots(userAccount).call();
+            const remainingSlots = await window.contract.methods.getRemainingDepositSlots(window.userAccount).call();
             document.getElementById('remainingSlotsHint').innerHTML = `Remaining deposit slots: ${remainingSlots} / 50`;
             if (remainingSlots == 0) {
                 document.getElementById('remainingSlotsHint').style.color = 'var(--red)';
@@ -115,7 +126,7 @@ async function loadUserData() {
 }
 
 function resetUserUI() {
-    document.getElementById('dashAddress').textContent = `${userAccount.slice(0, 4)}...${userAccount.slice(-4)}`;
+    document.getElementById('dashAddress').textContent = `${window.userAccount.slice(0, 4)}...${window.userAccount.slice(-4)}`;
     document.getElementById('dashRank').innerHTML = '<i class="fas fa-ban"></i> No Rank';
     document.getElementById('dashRank').className = 'rank-badge';
     
@@ -129,7 +140,8 @@ function resetUserUI() {
     document.getElementById('dashTeamVolume').textContent = '0 USDT';
     document.getElementById('dashTotalEarned').textContent = '0 USDT';
     
-    document.getElementById('btnClaimRef').disabled = true;
+    const btnClaim = document.getElementById('btnClaimRef');
+    if (btnClaim) btnClaim.disabled = true;
     
     window.userRankBoost = 0;
 }
@@ -147,10 +159,10 @@ function updateDashboard(summary, network, userDetails) {
     const qualified = network[1] || 0;
     const volume = network[2] || '0';
     
-    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[5].toString(), 'ether')); // referralEarnings
+    const totalEarnedNum = parseFloat(window.web3.utils.fromWei(userDetails[5].toString(), 'ether'));
     
     // Address
-    document.getElementById('dashAddress').textContent = `${userAccount.slice(0, 4)}...${userAccount.slice(-4)}`;
+    document.getElementById('dashAddress').textContent = `${window.userAccount.slice(0, 4)}...${window.userAccount.slice(-4)}`;
     
     // Rank
     const rankNames = ['No Rank', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
@@ -161,10 +173,10 @@ function updateDashboard(summary, network, userDetails) {
     rankElement.className = `rank-badge ${rankClasses[rank] || ''}`;
     
     // Convert values
-    const totalActiveNum = parseFloat(web3.utils.fromWei(totalActiveAmount.toString(), 'ether'));
-    const pendingROINum = parseFloat(web3.utils.fromWei(totalPendingROI.toString(), 'ether'));
-    const pendingBonusesNum = parseFloat(web3.utils.fromWei(pendingBonuses.toString(), 'ether'));
-    const volumeNum = parseFloat(web3.utils.fromWei(volume.toString(), 'ether'));
+    const totalActiveNum = parseFloat(window.web3.utils.fromWei(totalActiveAmount.toString(), 'ether'));
+    const pendingROINum = parseFloat(window.web3.utils.fromWei(totalPendingROI.toString(), 'ether'));
+    const pendingBonusesNum = parseFloat(window.web3.utils.fromWei(pendingBonuses.toString(), 'ether'));
+    const volumeNum = parseFloat(window.web3.utils.fromWei(volume.toString(), 'ether'));
     
     // Update UI
     document.getElementById('dashTotalActive').textContent = totalActiveNum.toFixed(2) + ' USDT';
@@ -177,13 +189,14 @@ function updateDashboard(summary, network, userDetails) {
     document.getElementById('dashTeamVolume').textContent = volumeNum.toFixed(2) + ' USDT';
     document.getElementById('dashTotalEarned').textContent = totalEarnedNum.toFixed(2) + ' USDT';
     
-    document.getElementById('btnClaimRef').disabled = pendingBonusesNum < 0.1;
+    const btnClaim = document.getElementById('btnClaimRef');
+    if (btnClaim) btnClaim.disabled = pendingBonusesNum < 0.1;
 }
 
 function updateInvestPage(summary) {
     if (!summary) return;
     const rank = parseInt(summary[3] || 0);
-    window.userRank = rank; // Save for calculation
+    window.userRank = rank;
     calculateInvestment();
 }
 
@@ -194,8 +207,8 @@ function updateReferralPage(network, qualified, userDetails) {
     const qual = network[1] || 0;
     const volume = network[2] || '0';
     
-    const volumeNum = parseFloat(web3.utils.fromWei(volume.toString(), 'ether'));
-    const totalEarnedNum = parseFloat(web3.utils.fromWei(userDetails[5].toString(), 'ether')); // referralEarnings
+    const volumeNum = parseFloat(window.web3.utils.fromWei(volume.toString(), 'ether'));
+    const totalEarnedNum = parseFloat(window.web3.utils.fromWei(userDetails[5].toString(), 'ether'));
     
     document.getElementById('refDirects').textContent = directs;
     document.getElementById('refQualified').textContent = qual;
@@ -203,7 +216,7 @@ function updateReferralPage(network, qualified, userDetails) {
     document.getElementById('refTotalEarned').textContent = totalEarnedNum.toFixed(2) + ' USDT';
     
     const baseUrl = window.location.origin + window.location.pathname;
-    document.getElementById('refLink').value = `${baseUrl}?ref=${userAccount}`;
+    document.getElementById('refLink').value = `${baseUrl}?ref=${window.userAccount}`;
     
     // Qualified status from contract (array of 5 booleans)
     for (let i = 0; i < 5; i++) {
@@ -228,7 +241,7 @@ function updateLeadershipPage(summary, network) {
     if (!summary || !network) return;
     
     const rank = parseInt(summary[3] || 0);
-    const teamVolume = parseFloat(web3.utils.fromWei(network[2].toString(), 'ether'));
+    const teamVolume = parseFloat(window.web3.utils.fromWei(network[2].toString(), 'ether'));
     
     const rankRequirements = [5000, 15000, 30000, 50000, 100000];
     
@@ -236,16 +249,21 @@ function updateLeadershipPage(summary, network) {
         const req = rankRequirements[i];
         const progress = Math.min(100, (teamVolume / req) * 100);
         
-        document.getElementById(`rankProgress${i+1}`).textContent = Math.round(progress) + '%';
-        document.getElementById(`rankBar${i+1}`).style.width = progress + '%';
+        const progressEl = document.getElementById(`rankProgress${i+1}`);
+        const barEl = document.getElementById(`rankBar${i+1}`);
+        const cardEl = document.getElementById(`rankCard${i+1}`);
         
-        const card = document.getElementById(`rankCard${i+1}`);
-        if (rank === i + 1) {
-            card.style.boxShadow = '0 0 30px rgba(64, 145, 108, 0.5)';
-            card.style.borderColor = 'var(--green-accent)';
-        } else {
-            card.style.boxShadow = '';
-            card.style.borderColor = '';
+        if (progressEl) progressEl.textContent = Math.round(progress) + '%';
+        if (barEl) barEl.style.width = progress + '%';
+        
+        if (cardEl) {
+            if (rank === i + 1) {
+                cardEl.style.boxShadow = '0 0 30px rgba(64, 145, 108, 0.5)';
+                cardEl.style.borderColor = 'var(--green-accent)';
+            } else {
+                cardEl.style.boxShadow = '';
+                cardEl.style.borderColor = '';
+            }
         }
     }
 }
@@ -254,11 +272,11 @@ function updateLeadershipPage(summary, network) {
 function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei) {
     console.log('[openWithdrawModal] Called with:', { depositId, amount, isLocked, feePercent, dailyROIWei });
     
-    // Simpan data untuk digunakan saat confirm
+    // Store data for confirmation
     window.currentWithdrawDepositId = depositId;
     window.currentWithdrawAmount = amount;
     
-    // Helper function untuk set textContent dengan null check
+    // Helper function to safely set text content
     const setText = (id, text) => {
         const el = document.getElementById(id);
         if (el) {
@@ -268,40 +286,32 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei)
         }
     };
     
-    // Update modal content dengan null check
+    // Update modal content
     setText('withdrawDepositId', depositId);
     setText('withdrawAmount', amount.toFixed(2) + ' USDT');
     
-    // Konversi dailyROI dari wei ke USDT amount
-    let dailyROIDisplay;
+    // Convert dailyROI from wei to USDT amount
+    let dailyROIUSDT = 0;
     try {
-        // Handle berbagai tipe input (string, number, object)
-        let dailyROIString;
-        if (typeof dailyROIWei === 'object' && dailyROIWei !== null && dailyROIWei.toString) {
-            dailyROIString = dailyROIWei.toString();
-        } else {
-            dailyROIString = String(dailyROIWei);
+        if (dailyROIWei && dailyROIWei !== 'undefined') {
+            dailyROIUSDT = parseFloat(window.web3.utils.fromWei(dailyROIWei.toString(), 'ether'));
         }
-        
-        const dailyROIUSDT = parseFloat(web3.utils.fromWei(dailyROIString, 'ether'));
-        dailyROIDisplay = dailyROIUSDT.toFixed(2) + ' USDT';
-        console.log('[Withdraw Modal] dailyROIWei:', dailyROIString, '-> USDT:', dailyROIUSDT);
+        console.log('[Withdraw Modal] dailyROIWei:', dailyROIWei, '-> USDT:', dailyROIUSDT);
     } catch (e) {
-        dailyROIDisplay = '0.00 USDT';
         console.error('[Withdraw Modal] Error converting dailyROI:', e);
     }
     
-    setText('withdrawDailyROI', dailyROIDisplay);
+    setText('withdrawDailyROI', dailyROIUSDT.toFixed(2) + ' USDT');
     
-    // Hitung fee jika early withdrawal
-    const feePercentValue = parseInt(feePercent) || 0;
+    // Calculate fee if early withdrawal
+    const feePercentValue = isLocked ? 30 : 0;
     const feeAmount = (amount * feePercentValue / 100);
     const receiveAmount = amount - feeAmount;
     
     setText('withdrawFee', feeAmount.toFixed(2) + ' USDT (' + feePercentValue + '%)');
     setText('withdrawReceive', receiveAmount.toFixed(2) + ' USDT');
     
-    // Tampilkan/hidden warning early withdrawal
+    // Show/hide early withdrawal warning
     const warningEl = document.getElementById('withdrawWarning');
     if (warningEl) {
         warningEl.style.display = isLocked ? 'flex' : 'none';
@@ -311,9 +321,9 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei)
     const modal = document.getElementById('withdrawModal');
     if (modal) {
         modal.style.display = 'flex';
-        console.log('[openWithdrawModal] Modal opened successfully');
     } else {
         console.error('[openWithdrawModal] Modal element not found');
+        showNotification('Error: Withdraw modal not found', 'error');
     }
 }
 
@@ -335,31 +345,21 @@ function openClaimROIModal(depositId, pendingROI) {
         modal.style.display = 'flex';
     } else {
         console.error('[openClaimROIModal] Modal element not found');
+        showNotification('Error: Claim ROI modal not found', 'error');
     }
-}
-
-function closeModal(modalId) {
-    console.log('[closeModal] Closing:', modalId);
-    const modal = document.getElementById(modalId);
-    if (modal) modal.style.display = 'none';
 }
 
 // ===== LOAD DEPOSITS =====
 async function loadDeposits() {
-    if (!userAccount || !contract) {
+    if (!window.userAccount || !window.contract) {
         console.error('Wallet not connected or contract not initialized');
         return;
     }
     
     try {
-        console.log('Loading deposits for:', userAccount);
+        console.log('Loading deposits for:', window.userAccount);
         
-        // Check if method exists
-        if (!contract.methods.getUserDepositIds) {
-            throw new Error('getUserDepositIds method not found in contract');
-        }
-        
-        const depositIds = await contract.methods.getUserDepositIds(userAccount).call();
+        const depositIds = await window.contract.methods.getUserDepositIds(window.userAccount).call();
         console.log('Deposit IDs:', depositIds);
         
         const depositsList = document.getElementById('depositsList');
@@ -370,11 +370,9 @@ async function loadDeposits() {
             return;
         }
         
-        // Clear list tapi pertahankan noDepositsMessage
+        // Clear list but keep noDepositsMessage
         depositsList.innerHTML = '';
-        if (noDepositsMsg) {
-            depositsList.appendChild(noDepositsMsg);
-        }
+        if (noDepositsMsg) depositsList.appendChild(noDepositsMsg);
         
         if (!depositIds || depositIds.length === 0) {
             if (noDepositsMsg) noDepositsMsg.style.display = 'block';
@@ -385,39 +383,29 @@ async function loadDeposits() {
         
         for (const depositId of depositIds) {
             try {
-                const summary = await contract.methods.getDepositSummary(userAccount, depositId).call();
+                const summary = await window.contract.methods.getDepositSummary(window.userAccount, depositId).call();
                 console.log(`Deposit ${depositId} summary:`, summary);
                 
                 const id = parseInt(summary[0]);
-                const amount = parseFloat(web3.utils.fromWei(summary[1].toString(), 'ether'));
+                const amount = parseFloat(window.web3.utils.fromWei(summary[1].toString(), 'ether'));
                 const depositTime = parseInt(summary[2]);
                 const lastClaimTime = parseInt(summary[3]);
-                const pendingROI = parseFloat(web3.utils.fromWei(summary[4].toString(), 'ether'));
+                const pendingROI = parseFloat(window.web3.utils.fromWei(summary[4].toString(), 'ether'));
                 const lockEnd = parseInt(summary[5]);
                 const daysLeft = parseInt(summary[6]);
                 
-                // Ambil raw value dari contract (index 7 = dailyROI)
+                // Get dailyROI raw value from contract (index 7)
                 let rawDailyROI = summary[7];
+                let dailyROIString = rawDailyROI ? rawDailyROI.toString() : '0';
+                let dailyROIUSDT = 0;
                 
-                // Konversi ke string untuk passing ke fungsi
-                let dailyROIString;
-                if (typeof rawDailyROI === 'object' && rawDailyROI !== null && rawDailyROI.toString) {
-                    dailyROIString = rawDailyROI.toString();
-                } else {
-                    dailyROIString = String(rawDailyROI);
-                }
-                
-                // Konversi ke USDT amount menggunakan fromWei untuk tampilan
-                let dailyROIUSDT;
                 try {
-                    dailyROIUSDT = parseFloat(web3.utils.fromWei(dailyROIString, 'ether'));
+                    dailyROIUSDT = parseFloat(window.web3.utils.fromWei(dailyROIString, 'ether'));
                 } catch (e) {
                     dailyROIUSDT = parseFloat(dailyROIString) / 1e18;
                 }
                 
-                // Format untuk tampilan: 0.06 USDT
                 const dailyROIDisplay = dailyROIUSDT.toFixed(2) + ' USDT';
-                
                 const isActive = summary[8];
                 
                 if (!isActive) continue;
@@ -425,8 +413,8 @@ async function loadDeposits() {
                 const isLocked = daysLeft > 0;
                 const feePercent = isLocked ? 30 : 0;
                 
-                // PERBAIKAN: Gunakan data attributes atau event listener yang benar
-                // Hindari passing complex objects di onclick string
+                // Store dailyROIWei as string for the modal
+                const dailyROIWei = dailyROIString;
                 
                 const depositCard = document.createElement('div');
                 depositCard.className = 'deposit-card';
@@ -463,39 +451,20 @@ async function loadDeposits() {
                     </div>
                     
                     <div class="progress-bar" style="margin: 0.5rem 0;">
-                        <div class="progress-bar-fill" style="width: ${((100 - daysLeft) / 100 * 100)}%"></div>
+                        <div class="progress-bar-fill" style="width: ${Math.min(100, ((100 - daysLeft) / 100 * 100))}%"></div>
                     </div>
                     
                     <div class="deposit-actions">
-                        <button class="btn btn--success btn-sm" id="claimBtn_${id}" ${pendingROI < 0.1 ? 'disabled' : ''}>
+                        <button class="btn btn--success btn-sm" onclick="window.openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}>
                             <i class="fas fa-hand-holding-usd"></i> Claim ROI
                         </button>
-                        <button class="btn btn--danger btn-sm" id="withdrawBtn_${id}">
+                        <button class="btn btn--danger btn-sm" onclick="window.openWithdrawModal(${id}, ${amount}, ${isLocked}, ${feePercent}, '${dailyROIWei}')">
                             <i class="fas fa-sign-out-alt"></i> Withdraw Capital
                         </button>
                     </div>
                 `;
                 
                 depositsList.appendChild(depositCard);
-                
-                // PERBAIKAN: Attach event listeners setelah element ada di DOM
-                // Ini lebih reliable daripada onclick inline
-                
-                const claimBtn = document.getElementById(`claimBtn_${id}`);
-                if (claimBtn) {
-                    claimBtn.addEventListener('click', function() {
-                        openClaimROIModal(id, pendingROI);
-                    });
-                }
-                
-                const withdrawBtn = document.getElementById(`withdrawBtn_${id}`);
-                if (withdrawBtn) {
-                    withdrawBtn.addEventListener('click', function() {
-                        // Pass dailyROIString sebagai string
-                        openWithdrawModal(id, amount, isLocked, feePercent, dailyROIString);
-                    });
-                }
-                
             } catch (err) {
                 console.error(`Error loading deposit ${depositId}:`, err);
             }
@@ -505,7 +474,6 @@ async function loadDeposits() {
         console.error('Load deposits error:', error);
         showNotification('Error loading deposits: ' + error.message, 'error');
         
-        // Tampilkan pesan error di UI
         const depositsList = document.getElementById('depositsList');
         if (depositsList) {
             depositsList.innerHTML = `
@@ -513,7 +481,7 @@ async function loadDeposits() {
                     <div class="empty-state__icon"><i class="fas fa-exclamation-triangle"></i></div>
                     <p>Error loading deposits</p>
                     <p style="font-size: 0.875rem; color: var(--text-muted);">${error.message}</p>
-                    <button class="btn btn--primary" onclick="loadDeposits()" style="margin-top: 1rem;">
+                    <button class="btn btn--primary" onclick="window.loadDeposits()" style="margin-top: 1rem;">
                         <i class="fas fa-sync"></i> Retry
                     </button>
                 </div>
@@ -527,18 +495,14 @@ function calculateInvestment() {
     const amount = parseFloat(document.getElementById('investAmount').value) || 0;
     const rank = window.userRank || 0;
     
-    // Boost dalam persen (0.1%, 0.2%, 0.3%, 0.5%, 1.0%)
+    // Boost percentages (0.1%, 0.2%, 0.3%, 0.5%, 1.0%)
     const boostPercents = [0, 0.1, 0.2, 0.3, 0.5, 1.0];
     const currentBoost = boostPercents[rank] || 0;
     
-    // PERBAIKAN: Net Deposit = full amount (tidak dikurangi fee untuk tampilan)
     const net = amount;
-    
-    // ROI dihitung dari FULL AMOUNT (bukan net)
     const baseRate = 0.012; // 1.2%
-    const dailyROI = amount * baseRate; // 1.2% dari full amount
+    const dailyROI = amount * baseRate;
     
-    // With Rank Boost
     let boostedDaily = 0;
     let boostText = 'Not active';
     
@@ -548,18 +512,21 @@ function calculateInvestment() {
         boostText = boostedDaily.toFixed(4) + ' USDT';
     }
     
-    // 100 Days Projection
     const projection100 = boostedDaily > 0 ? boostedDaily * 100 : dailyROI * 100;
     
-    // Update UI
-    document.getElementById('calcNet').textContent = net.toFixed(2) + ' USDT';
-    document.getElementById('calcDaily').textContent = dailyROI.toFixed(4) + ' USDT';
-    document.getElementById('calcDailyBoosted').textContent = boostText;
-    document.getElementById('calc100Days').textContent = projection100.toFixed(2) + ' USDT';
+    const calcNet = document.getElementById('calcNet');
+    const calcDaily = document.getElementById('calcDaily');
+    const calcDailyBoosted = document.getElementById('calcDailyBoosted');
+    const calc100Days = document.getElementById('calc100Days');
+    
+    if (calcNet) calcNet.textContent = net.toFixed(2) + ' USDT';
+    if (calcDaily) calcDaily.textContent = dailyROI.toFixed(4) + ' USDT';
+    if (calcDailyBoosted) calcDailyBoosted.textContent = boostText;
+    if (calc100Days) calc100Days.textContent = projection100.toFixed(2) + ' USDT';
 }
 
 async function submitInvestment() {
-    if (!userAccount) {
+    if (!window.userAccount) {
         showNotification('Please connect your wallet first', 'error');
         return;
     }
@@ -572,10 +539,9 @@ async function submitInvestment() {
     
     let referrer = document.getElementById('referrerAddress').value.trim();
     
-    // Validasi referrer
     if (!referrer || referrer === '') {
         referrer = '0x0000000000000000000000000000000000000000';
-    } else if (!web3.utils.isAddress(referrer)) {
+    } else if (!window.web3.utils.isAddress(referrer)) {
         showNotification('Invalid referrer address', 'error');
         return;
     }
@@ -585,7 +551,7 @@ async function submitInvestment() {
     btn.innerHTML = '<span class="spinner"></span> Processing';
     
     try {
-        const amountWei = web3.utils.toWei(amount, 'ether');
+        const amountWei = window.web3.utils.toWei(amount, 'ether');
         
         const txWeb3 = new Web3(window.ethereum);
         const txContract = new txWeb3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
@@ -594,13 +560,11 @@ async function submitInvestment() {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         const fromAccount = accounts[0];
         
-        // Check USDT balance
         const balance = await txUsdtContract.methods.balanceOf(fromAccount).call();
         if (BigInt(balance) < BigInt(amountWei)) {
             throw new Error('Insufficient USDT balance');
         }
         
-        // Approve USDT
         showNotification('Approving USDT...', 'info');
         const allowance = await txUsdtContract.methods.allowance(fromAccount, CONFIG.CONTRACT_ADDRESS).call();
         if (BigInt(allowance) < BigInt(amountWei)) {
@@ -611,7 +575,6 @@ async function submitInvestment() {
             showNotification('USDT approved successfully', 'success');
         }
         
-        // Confirm Deposit
         showNotification('Confirming deposit...', 'info');
         const investMethod = txContract.methods.invest(amountWei, referrer);
         const investGas = await estimateGasWithBuffer(investMethod, fromAccount);
@@ -641,7 +604,7 @@ async function submitInvestment() {
 }
 
 async function confirmClaimROI(depositId) {
-    if (!userAccount) return;
+    if (!window.userAccount) return;
     
     closeModal('claimROIModal');
     
@@ -672,7 +635,7 @@ async function confirmClaimROI(depositId) {
 }
 
 async function confirmWithdraw(depositId) {
-    if (!userAccount) return;
+    if (!window.userAccount) return;
     
     closeModal('withdrawModal');
     
@@ -703,7 +666,7 @@ async function confirmWithdraw(depositId) {
 }
 
 async function claimReferral() {
-    if (!userAccount) return;
+    if (!window.userAccount) return;
     
     const btn = document.getElementById('btnClaimRef');
     const original = btn.innerHTML;
