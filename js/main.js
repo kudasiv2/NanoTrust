@@ -337,13 +337,44 @@ function openClaimROIModal(depositId, pendingROI) {
 
 // ===== LOAD DEPOSITS =====
 async function loadDeposits() {
-    if (!window.userAccount || !window.contract) {
-        console.error('Wallet not connected or contract not initialized');
+    // Perbaikan: Cek window.userAccount dan window.contract dengan lebih teliti
+    console.log('[loadDeposits] Checking connection...');
+    console.log('[loadDeposits] window.userAccount:', window.userAccount);
+    console.log('[loadDeposits] window.contract:', window.contract);
+    
+    if (!window.userAccount) {
+        console.error('Wallet not connected');
+        showNotification('Please connect your wallet first', 'warning');
+        
+        // Tampilkan pesan di UI
+        const depositsList = document.getElementById('depositsList');
+        if (depositsList) {
+            depositsList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state__icon"><i class="fas fa-wallet"></i></div>
+                    <p>Please connect your wallet to view deposits</p>
+                    <button class="btn btn--primary" onclick="window.connectWallet()" style="margin-top: 1rem;">
+                        <i class="fas fa-plug"></i> Connect Wallet
+                    </button>
+                </div>
+            `;
+        }
+        return;
+    }
+    
+    if (!window.contract) {
+        console.error('Contract not initialized');
+        showNotification('Contract not initialized, please refresh', 'error');
         return;
     }
     
     try {
         console.log('Loading deposits for:', window.userAccount);
+        
+        // Cek apakah method getUserDepositIds ada
+        if (!window.contract.methods.getUserDepositIds) {
+            throw new Error('getUserDepositIds method not found');
+        }
         
         const depositIds = await window.contract.methods.getUserDepositIds(window.userAccount).call();
         console.log('Deposit IDs:', depositIds);
@@ -356,11 +387,14 @@ async function loadDeposits() {
             return;
         }
         
+        // Clear list
         depositsList.innerHTML = '';
-        if (noDepositsMsg) depositsList.appendChild(noDepositsMsg);
         
         if (!depositIds || depositIds.length === 0) {
-            if (noDepositsMsg) noDepositsMsg.style.display = 'block';
+            if (noDepositsMsg) {
+                depositsList.appendChild(noDepositsMsg);
+                noDepositsMsg.style.display = 'block';
+            }
             return;
         }
         
@@ -397,6 +431,9 @@ async function loadDeposits() {
                 const feePercent = isLocked ? 30 : 0;
                 const dailyROIWei = dailyROIString;
                 
+                // Hitung progress lock period
+                const progressPercent = Math.min(100, ((100 - daysLeft) / 100 * 100));
+                
                 const depositCard = document.createElement('div');
                 depositCard.className = 'deposit-card';
                 depositCard.innerHTML = `
@@ -432,7 +469,7 @@ async function loadDeposits() {
                     </div>
                     
                     <div class="progress-bar" style="margin: 0.5rem 0;">
-                        <div class="progress-bar-fill" style="width: ${Math.min(100, ((100 - daysLeft) / 100 * 100))}%"></div>
+                        <div class="progress-bar-fill" style="width: ${progressPercent}%"></div>
                     </div>
                     
                     <div class="deposit-actions">
