@@ -16,6 +16,8 @@ function formatNumber(num, compact = false) {
 
 function showNotification(message, type = 'info') {
     const container = document.getElementById('notificationContainer');
+    if (!container) return;
+    
     const notif = document.createElement('div');
     const icons = { success: 'check-circle', error: 'exclamation-circle', warning: 'exclamation-triangle', info: 'info-circle' };
     
@@ -40,11 +42,11 @@ function showSection(sectionName) {
     });
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (userAccount) {
-        loadUserData();
-        if (sectionName === 'deposits') loadDeposits();
+    if (window.userAccount) {
+        window.loadUserData();
+        if (sectionName === 'deposits') window.loadDeposits();
     }
-    if (sectionName === 'home') loadVenusTVL();
+    if (sectionName === 'home') window.loadVenusTVL();
 }
 
 function toggleSidebar() {
@@ -55,15 +57,18 @@ function toggleMobileMenu() {
     document.getElementById('mobileMenu').classList.toggle('active');
 }
 
-function closeModal(id) {
-    document.getElementById(id)?.classList.remove('active');
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
 }
 
 function copyRefLink() {
     const link = document.getElementById('refLink');
-    link.select();
-    document.execCommand('copy');
-    showNotification('Referral link copied!', 'success');
+    if (link) {
+        link.select();
+        document.execCommand('copy');
+        showNotification('Referral link copied!', 'success');
+    }
 }
 
 function toggleFaq(element) {
@@ -87,117 +92,28 @@ async function estimateGasWithBuffer(method, from, value = '0') {
     }
 }
 
-// ===== MODAL FUNCTIONS =====
-function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROI) {
-    const modalContainer = document.getElementById('modalContainer');
-    if (!modalContainer) return;
-    
-    const modalHtml = `
-        <div class="modal-overlay" id="withdrawModal">
-            <div class="modal">
-                <div class="modal__header">
-                    <h3 class="modal__title">Withdraw Deposit #${depositId}</h3>
-                    <button class="modal__close" onclick="closeModal('withdrawModal')">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div id="withdrawContent">
-                    <div class="alert alert--${isLocked ? 'warning' : 'info'}" style="margin-bottom: 1rem;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>${isLocked ? 'Early withdrawal will incur a 30% fee!' : 'No withdrawal fee - Lock period complete!'}</span>
-                    </div>
-                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9375rem;">
-                        You are about to withdraw deposit #${depositId}. 
-                        ${isLocked ? 'Since your 100-day lock period is not complete, 30% of your deposit will be deducted as an early withdrawal fee.' : 'Your lock period is complete. You can withdraw without fees.'}
-                    </p>
-                    <div class="tx-breakdown" style="margin-bottom: 1.5rem;">
-                        <div class="tx-row">
-                            <span class="tx-label">Deposit Amount:</span>
-                            <span id="withdrawAmount">${amount.toFixed(2)} USDT</span>
-                        </div>
-                        <div class="tx-row">
-                            <span class="tx-label">Daily ROI Rate:</span>
-                            <span>${(dailyROI / 10000).toFixed(2)}%</span>
-                        </div>
-                        <div class="tx-row">
-                            <span class="tx-label">Withdrawal Fee:</span>
-                            <span id="withdrawFee" style="color: var(--red);">${(amount * feePercent / 100).toFixed(2)} USDT (${feePercent}%)</span>
-                        </div>
-                        <div class="tx-row">
-                            <span class="tx-label">You Receive (Capital):</span>
-                            <span id="withdrawReceive" style="color: var(--gold);">${(amount * (100 - feePercent) / 100).toFixed(2)} USDT</span>
-                        </div>
-                        <div class="tx-row">
-                            <span class="tx-label">Pending ROI to Claim:</span>
-                            <span id="withdrawROI" style="color: var(--green-accent);">Will be claimed separately</span>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 0.75rem;">
-                        <button class="btn btn--secondary" style="flex: 1;" onclick="closeModal('withdrawModal')">Cancel</button>
-                        <button class="btn btn--danger" style="flex: 1;" onclick="confirmWithdraw(${depositId})">
-                            <i class="fas fa-sign-out-alt"></i> Confirm Withdraw
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    modalContainer.innerHTML = modalHtml;
-    document.getElementById('withdrawModal').classList.add('active');
-}
-
-function openClaimROIModal(depositId, pendingROI) {
-    const modalContainer = document.getElementById('modalContainer');
-    if (!modalContainer) return;
-    
-    const modalHtml = `
-        <div class="modal-overlay" id="claimROIModal">
-            <div class="modal">
-                <div class="modal__header">
-                    <h3 class="modal__title">Claim ROI - Deposit #${depositId}</h3>
-                    <button class="modal__close" onclick="closeModal('claimROIModal')">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div>
-                    <div class="alert alert--info" style="margin-bottom: 1rem;">
-                        <i class="fas fa-info-circle"></i>
-                        <span>You are about to claim your pending ROI</span>
-                    </div>
-                    <div class="tx-breakdown" style="margin-bottom: 1.5rem;">
-                        <div class="tx-row">
-                            <span class="tx-label">Pending ROI:</span>
-                            <span style="color: var(--gold); font-weight: 600;">${pendingROI.toFixed(2)} USDT</span>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 0.75rem;">
-                        <button class="btn btn--secondary" style="flex: 1;" onclick="closeModal('claimROIModal')">Cancel</button>
-                        <button class="btn btn--gold" style="flex: 1;" onclick="confirmClaimROI(${depositId})">
-                            <i class="fas fa-hand-holding-usd"></i> Confirm Claim
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    modalContainer.innerHTML = modalHtml;
-    document.getElementById('claimROIModal').classList.add('active');
-}
-
 // ===== EVENT LISTENERS =====
 function setupUIEventListeners() {
-    document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
-    document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+    
+    const connectBtn = document.getElementById('connectWalletBtn');
+    if (connectBtn) {
+        connectBtn.addEventListener('click', window.connectWallet);
+    }
     
     // Investment calculator
-    document.getElementById('investAmount')?.addEventListener('input', calculateInvestment);
+    const investAmount = document.getElementById('investAmount');
+    if (investAmount) {
+        investAmount.addEventListener('input', window.calculateInvestment);
+    }
     
     if (window.ethereum) {
-        window.ethereum.on('accountsChanged', handleAccountsChanged);
+        window.ethereum.on('accountsChanged', window.handleAccountsChanged);
         window.ethereum.on('chainChanged', () => window.location.reload());
-        window.ethereum.on('disconnect', () => handleWalletDisconnect());
+        window.ethereum.on('disconnect', () => window.handleWalletDisconnect());
     }
     
     // Close menus when clicking outside
