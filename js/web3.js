@@ -9,16 +9,29 @@ let userData = null;
 let userRank = 0;
 let autoRefreshInterval;
 
+// Expose variables ke window
+window.web3 = null;
+window.contract = null;
+window.usdtContract = null;
+window.usdcContract = null;
+window.userAccount = null;
+window.userRank = 0;
+
 // Initialize Web3 with HTTP provider for read-only
 async function initWeb3() {
     try {
         web3 = new Web3(new Web3.providers.HttpProvider(CONFIG.BSC_RPC));
+        window.web3 = web3;
         
         // Initialize contracts
         contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
         usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
         usdcContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDC_ADDRESS);
         pancakePoolContract = new web3.eth.Contract(PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
+        
+        window.contract = contract;
+        window.usdtContract = usdtContract;
+        window.usdcContract = usdcContract;
         
         return true;
     } catch (error) {
@@ -66,13 +79,20 @@ async function connectWallet() {
         
         if (accounts.length > 0) {
             userAccount = accounts[0];
+            window.userAccount = userAccount;
             
             // IMPORTANT: Re-initialize web3 with the provider (not HTTP) for transactions
             web3 = new Web3(window.ethereum);
+            window.web3 = web3;
+            
             contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
             usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
             usdcContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDC_ADDRESS);
             pancakePoolContract = new web3.eth.Contract(PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
+            
+            window.contract = contract;
+            window.usdtContract = usdtContract;
+            window.usdcContract = usdcContract;
             
             localStorage.setItem('walletConnected', 'true');
             updateWalletUI();
@@ -95,6 +115,7 @@ async function connectWallet() {
 
 function handleWalletDisconnect() {
     userAccount = null;
+    window.userAccount = null;
     userData = null;
     localStorage.removeItem('walletConnected');
     updateWalletUI();
@@ -106,13 +127,21 @@ function handleAccountsChanged(accounts) {
         handleWalletDisconnect();
     } else if (accounts[0] !== userAccount) {
         userAccount = accounts[0];
+        window.userAccount = userAccount;
+        
         // Re-initialize contract with provider
         if (window.ethereum) {
             web3 = new Web3(window.ethereum);
+            window.web3 = web3;
+            
             contract = new web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
             usdtContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
             usdcContract = new web3.eth.Contract(USDT_ABI, CONFIG.USDC_ADDRESS);
             pancakePoolContract = new web3.eth.Contract(PANCAKE_V3_POOL_ABI, CONFIG.PANCAKE_POOL_ADDRESS);
+            
+            window.contract = contract;
+            window.usdtContract = usdtContract;
+            window.usdcContract = usdcContract;
         }
         updateWalletUI();
         loadUserData();
@@ -147,24 +176,38 @@ function updateWalletUI() {
 // ===== LOAD TVL FROM PANCAKE V3 POOL =====
 async function loadVenusTVL() {
     try {
+        if (!window.usdtContract || !window.usdcContract) {
+            console.log('Contracts not ready for TVL');
+            return;
+        }
+        
         // Get USDT and USDC balance from the pool (real TVL)
         const [usdtBalance, usdcBalance] = await Promise.all([
-            usdtContract.methods.balanceOf(CONFIG.PANCAKE_POOL_ADDRESS).call(),
-            usdcContract.methods.balanceOf(CONFIG.PANCAKE_POOL_ADDRESS).call()
+            window.usdtContract.methods.balanceOf(CONFIG.PANCAKE_POOL_ADDRESS).call(),
+            window.usdcContract.methods.balanceOf(CONFIG.PANCAKE_POOL_ADDRESS).call()
         ]);
         
         // Convert from wei (18 decimals)
-        const usdtAmount = parseFloat(web3.utils.fromWei(usdtBalance, 'ether'));
-        const usdcAmount = parseFloat(web3.utils.fromWei(usdcBalance, 'ether'));
+        const usdtAmount = parseFloat(window.web3.utils.fromWei(usdtBalance, 'ether'));
+        const usdcAmount = parseFloat(window.web3.utils.fromWei(usdcBalance, 'ether'));
         
         // Total TVL in USD (1 USDT = $1, 1 USDC = $1)
         const totalTVL = usdtAmount + usdcAmount;
         
         const tvlFormatted = '$' + formatNumber(totalTVL, true);
-        document.getElementById('statTVL').innerHTML = tvlFormatted;
+        const statTVL = document.getElementById('statTVL');
+        if (statTVL) statTVL.innerHTML = tvlFormatted;
         
     } catch (error) {
         console.error('TVL error:', error);
-        document.getElementById('statTVL').innerHTML = 'Error loading TVL';
+        const statTVL = document.getElementById('statTVL');
+        if (statTVL) statTVL.innerHTML = 'Error loading TVL';
     }
 }
+
+// Expose functions ke window
+window.initWeb3 = initWeb3;
+window.connectWallet = connectWallet;
+window.handleWalletDisconnect = handleWalletDisconnect;
+window.handleAccountsChanged = handleAccountsChanged;
+window.loadVenusTVL = loadVenusTVL;
