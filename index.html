@@ -931,59 +931,64 @@
     <!-- Notification Container -->
     <div class="notification-container" id="notificationContainer"></div>
 
+    <!-- Deposit Modals (dynamically created) -->
+    <div id="modalContainer"></div>
+
     <!-- ============================================================
-         MODAL STRUCTURES - TAMBAHAN BARU
+         MODAL STRUCTURES - TAMBAHAN BARU (menggunakan style yang sudah ada)
          ============================================================ -->
     
     <!-- Withdraw Modal -->
-    <div class="modal" id="withdrawModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="modal-content" style="background: var(--card-bg); border: var(--glass-border); border-radius: var(--radius-lg); padding: 2rem; max-width: 500px; width: 90%; position: relative;">
-            <button class="modal-close" onclick="closeModal('withdrawModal')" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem;">
-                <i class="fas fa-times"></i>
-            </button>
-            
-            <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;">
-                <i class="fas fa-sign-out-alt" style="color: var(--red); margin-right: 0.5rem;"></i>
-                Withdraw Deposit #<span id="withdrawDepositId">-</span>
-            </h3>
-            
-            <div class="alert alert--warning" id="withdrawWarning" style="margin-bottom: 1rem;">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>Early withdrawal will incur a 30% fee!</span>
+    <div class="modal" id="withdrawModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-sign-out-alt"></i> Withdraw Deposit #<span id="withdrawDepositId">-</span>
+                </h3>
+                <button class="modal-close" onclick="closeModal('withdrawModal')">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             
-            <div style="margin-bottom: 1.5rem;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <span style="color: var(--text-muted);">Deposit Amount:</span>
-                    <span id="withdrawAmount" style="font-weight: 600;">0.00 USDT</span>
+            <div class="modal-body">
+                <div class="alert alert--warning" id="withdrawWarning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Early withdrawal will incur a 30% fee!</span>
                 </div>
                 
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <span style="color: var(--text-muted);">Daily ROI Rate:</span>
-                    <span id="withdrawDailyROI" style="font-weight: 600; color: var(--gold);">0.00 USDT</span>
-                </div>
-                
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <span style="color: var(--text-muted);">Withdrawal Fee:</span>
-                    <span id="withdrawFee" style="font-weight: 600; color: var(--red);">0.00 USDT (0%)</span>
-                </div>
-                
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
-                    <span style="color: var(--text-muted);">You Receive (Capital):</span>
-                    <span id="withdrawReceive" style="font-weight: 600; color: var(--green-accent);">0.00 USDT</span>
-                </div>
-                
-                <div style="display: flex; justify-content: space-between; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <span style="color: var(--text-muted);">Pending ROI to Claim:</span>
-                    <span style="color: var(--green-accent);">Will be claimed separately</span>
+                <div class="info-list" style="margin-top: 1rem;">
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <span style="color: var(--text-muted);">Deposit Amount:</span>
+                        <span id="withdrawAmount" style="font-weight: 600;">0.00 USDT</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <span style="color: var(--text-muted);">Daily ROI Rate:</span>
+                        <span id="withdrawDailyROI" style="font-weight: 600; color: var(--gold);">0.00 USDT</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <span style="color: var(--text-muted);">Withdrawal Fee:</span>
+                        <span id="withdrawFee" style="font-weight: 600; color: var(--red);">0.00 USDT (0%)</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0;">
+                        <span style="color: var(--text-muted);">You Receive (Capital):</span>
+                        <span id="withdrawReceive" style="font-weight: 600; color: var(--green-accent);">0.00 USDT</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 0.5rem;">
+                        <span style="color: var(--text-muted);">Pending ROI to Claim:</span>
+                        <span style="color: var(--green-accent);">Will be claimed separately</span>
+                    </div>
                 </div>
             </div>
             
-            <div style="display: flex; gap: 1rem;">
-                <button class="btn btn--secondary" style="flex: 1;" onclick="closeModal('withdrawModal')">
+            <div class="modal-footer">
+                <button class="btn btn--secondary" onclick="closeModal('withdrawModal')">
                     Cancel
                 </button>
-                <button class="btn btn--danger" style="flex: 1;" onclick="confirmWithdraw(window.currentWithdrawDepositId)">
+                <button class="btn btn--danger" onclick="confirmWithdraw(window.currentWithdrawDepositId)">
                     <i class="fas fa-sign-out-alt"></i> Confirm Withdraw
                 </button>
             </div>
@@ -991,27 +996,29 @@
     </div>
 
     <!-- Claim ROI Modal -->
-    <div class="modal" id="claimROIModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="modal-content" style="background: var(--card-bg); border: var(--glass-border); border-radius: var(--radius-lg); padding: 2rem; max-width: 400px; width: 90%; position: relative;">
-            <button class="modal-close" onclick="closeModal('claimROIModal')" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem;">
-                <i class="fas fa-times"></i>
-            </button>
-            
-            <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;">
-                <i class="fas fa-hand-holding-usd" style="color: var(--green-accent); margin-right: 0.5rem;"></i>
-                Claim ROI for Deposit #<span id="claimROIDepositId">-</span>
-            </h3>
-            
-            <div style="text-align: center; margin-bottom: 1.5rem; padding: 1.5rem; background: rgba(124, 179, 66, 0.1); border-radius: var(--radius-lg);">
-                <div style="font-size: 2rem; font-weight: 700; color: var(--green-accent); margin-bottom: 0.5rem;" id="claimROIAmount">0.00 USDT</div>
-                <div style="color: var(--text-muted);">Available to claim</div>
+    <div class="modal" id="claimROIModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-hand-holding-usd"></i> Claim ROI for Deposit #<span id="claimROIDepositId">-</span>
+                </h3>
+                <button class="modal-close" onclick="closeModal('claimROIModal')">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             
-            <div style="display: flex; gap: 1rem;">
-                <button class="btn btn--secondary" style="flex: 1;" onclick="closeModal('claimROIModal')">
+            <div class="modal-body">
+                <div style="text-align: center; padding: 2rem; background: rgba(124, 179, 66, 0.1); border-radius: var(--radius-lg); margin-bottom: 1rem;">
+                    <div style="font-size: 2.5rem; font-weight: 700; color: var(--green-accent); margin-bottom: 0.5rem;" id="claimROIAmount">0.00 USDT</div>
+                    <div style="color: var(--text-muted);">Available to claim</div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn--secondary" onclick="closeModal('claimROIModal')">
                     Cancel
                 </button>
-                <button class="btn btn--success" style="flex: 1;" onclick="confirmClaimROI(window.currentClaimDepositId)">
+                <button class="btn btn--success" onclick="confirmClaimROI(window.currentClaimDepositId)">
                     <i class="fas fa-check"></i> Confirm Claim
                 </button>
             </div>
