@@ -44,10 +44,30 @@ function showSection(sectionName) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
     // Load data berdasarkan section yang aktif
-    if (window.userAccount) {
+    if (window.userAccount && window.contract) {
         window.loadUserData();
         if (sectionName === 'deposits') {
-            setTimeout(() => window.loadDeposits(), 500);
+            setTimeout(() => {
+                console.log('[showSection] Calling loadDeposits for section:', sectionName);
+                window.loadDeposits();
+            }, 500);
+        }
+    } else {
+        console.log('[showSection] Wallet not connected, skipping data load');
+        // Jika wallet belum connect, tampilkan alert
+        if (sectionName === 'deposits') {
+            const depositsList = document.getElementById('depositsList');
+            if (depositsList) {
+                depositsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state__icon"><i class="fas fa-wallet"></i></div>
+                        <p>Please connect your wallet to view deposits</p>
+                        <button class="btn btn--primary" onclick="window.connectWallet()" style="margin-top: 1rem;">
+                            <i class="fas fa-plug"></i> Connect Wallet
+                        </button>
+                    </div>
+                `;
+            }
         }
     }
     
