@@ -301,14 +301,14 @@ async function loadDeposits() {
                 const daysLeft = parseInt(summary[6]);
                 
                 // ============================================================
-                // PERBAIKAN DAILY ROI - GUNAKAN fromWei UNTUK NILAI BESAR
+                // PERBAIKAN DAILY ROI - TAMPILKAN USDT AMOUNT BUKAN PERSENTASE
                 // ============================================================
                 
-                // Ambil raw value dari contract
+                // Ambil raw value dari contract (index 7 = dailyROI)
                 let rawDailyROI = summary[7];
                 console.log(`[Deposit ${id}] Raw dailyROI:`, rawDailyROI, '| Type:', typeof rawDailyROI);
                 
-                // Konversi ke string (handle BigNumber, string, number)
+                // Konversi ke string
                 let dailyROIString;
                 if (typeof rawDailyROI === 'object' && rawDailyROI !== null && rawDailyROI.toString) {
                     dailyROIString = rawDailyROI.toString();
@@ -318,36 +318,21 @@ async function loadDeposits() {
                 
                 console.log(`[Deposit ${id}] dailyROIString:`, dailyROIString);
                 
-                // Cek apakah nilai besar (lebih dari 15 digit = kemungkinan wei format)
-                let dailyROINumber;
+                // Konversi ke USDT amount menggunakan fromWei
+                // Nilai dari contract adalah daily ROI dalam wei (misal: 60000000000000000 = 0.06 USDT)
+                let dailyROIUSDT;
                 
-                if (dailyROIString.length > 15) {
-                    // Nilai besar - konversi dengan fromWei
-                    try {
-                        dailyROINumber = parseFloat(web3.utils.fromWei(dailyROIString, 'ether'));
-                        console.log(`[Deposit ${id}] Converted fromWei:`, dailyROINumber);
-                    } catch (e) {
-                        // Jika gagal, parse langsung
-                        dailyROINumber = parseFloat(dailyROIString);
-                        console.log(`[Deposit ${id}] Parsed directly:`, dailyROINumber);
-                    }
-                } else {
-                    // Nilai kecil - parse langsung (basis points)
-                    dailyROINumber = parseFloat(dailyROIString);
-                    console.log(`[Deposit ${id}] Small value parsed:`, dailyROINumber);
+                try {
+                    dailyROIUSDT = parseFloat(web3.utils.fromWei(dailyROIString, 'ether'));
+                } catch (e) {
+                    // Fallback jika gagal
+                    dailyROIUSDT = parseFloat(dailyROIString) / 1e18;
                 }
                 
-                // Hitung persentase akhir
-                // Jika > 100, anggap basis points (bagi 100)
-                // Jika <= 100, anggap sudah persen
-                let dailyROIPercent;
-                if (dailyROINumber > 100) {
-                    dailyROIPercent = (dailyROINumber / 100).toFixed(2);
-                } else {
-                    dailyROIPercent = dailyROINumber.toFixed(2);
-                }
+                console.log(`[Deposit ${id}] Daily ROI USDT:`, dailyROIUSDT);
                 
-                console.log(`[Deposit ${id}] Final dailyROIPercent:`, dailyROIPercent + '%');
+                // Format untuk tampilan: 0.06 USDT
+                const dailyROIDisplay = dailyROIUSDT.toFixed(2) + ' USDT';
                 
                 // Simpan nilai untuk parameter withdraw
                 const dailyROIForWithdraw = dailyROIString;
@@ -377,7 +362,7 @@ async function loadDeposits() {
                     
                     <div class="deposit-stats">
                         <div class="deposit-stat">
-                            <div class="deposit-stat__value">${dailyROIPercent}%</div>
+                            <div class="deposit-stat__value">${dailyROIDisplay}</div>
                             <div class="deposit-stat__label">Daily ROI Rate</div>
                         </div>
                         <div class="deposit-stat">
