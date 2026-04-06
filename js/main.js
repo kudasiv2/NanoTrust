@@ -256,35 +256,44 @@ function openWithdrawModal(depositId, amount, isLocked, daysLeft, dailyROIWei) {
     window.currentWithdrawDepositId = depositId;
     window.currentWithdrawAmount = amount;
     
-    // Update modal content
-    document.getElementById('withdrawDepositId').textContent = depositId;
-    document.getElementById('withdrawAmount').textContent = amount.toFixed(2) + ' USDT';
+    // ============================================================
+    // PERBAIKAN: Null check untuk semua elemen modal
+    // ============================================================
     
-    // ============================================================
-    // PERBAIKAN: Konversi dailyROI dari wei ke USDT amount
-    // ============================================================
+    // Helper function untuk set textContent dengan null check
+    const setText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = text;
+        } else {
+            console.warn(`[openWithdrawModal] Element with id '${id}' not found`);
+        }
+    };
+    
+    // Update modal content dengan null check
+    setText('withdrawDepositId', depositId);
+    setText('withdrawAmount', amount.toFixed(2) + ' USDT');
+    
+    // Konversi dailyROI dari wei ke USDT amount
     let dailyROIDisplay;
     try {
-        // dailyROIWei adalah string dalam format wei (misal: '60000000000000000')
         const dailyROIUSDT = parseFloat(web3.utils.fromWei(dailyROIWei.toString(), 'ether'));
         dailyROIDisplay = dailyROIUSDT.toFixed(2) + ' USDT';
         console.log('[Withdraw Modal] dailyROIWei:', dailyROIWei, '-> USDT:', dailyROIUSDT);
     } catch (e) {
-        // Fallback jika konversi gagal
         dailyROIDisplay = '0.00 USDT';
         console.error('[Withdraw Modal] Error converting dailyROI:', e);
     }
     
-    document.getElementById('withdrawDailyROI').textContent = dailyROIDisplay;
-    // ============================================================
+    setText('withdrawDailyROI', dailyROIDisplay);
     
     // Hitung fee jika early withdrawal
     const feePercent = isLocked ? 30 : 0;
     const feeAmount = (amount * feePercent / 100);
     const receiveAmount = amount - feeAmount;
     
-    document.getElementById('withdrawFee').textContent = feeAmount.toFixed(2) + ' USDT (' + feePercent + '%)';
-    document.getElementById('withdrawReceive').textContent = receiveAmount.toFixed(2) + ' USDT';
+    setText('withdrawFee', feeAmount.toFixed(2) + ' USDT (' + feePercent + '%)');
+    setText('withdrawReceive', receiveAmount.toFixed(2) + ' USDT');
     
     // Tampilkan/hidden warning early withdrawal
     const warningEl = document.getElementById('withdrawWarning');
@@ -293,18 +302,32 @@ function openWithdrawModal(depositId, amount, isLocked, daysLeft, dailyROIWei) {
     }
     
     // Show modal
-    document.getElementById('withdrawModal').style.display = 'flex';
+    const modal = document.getElementById('withdrawModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    } else {
+        console.error('[openWithdrawModal] Modal element not found');
+    }
 }
 
 function openClaimROIModal(depositId, pendingROI) {
     window.currentClaimDepositId = depositId;
-    document.getElementById('claimROIDepositId').textContent = depositId;
-    document.getElementById('claimROIAmount').textContent = pendingROI.toFixed(2) + ' USDT';
-    document.getElementById('claimROIModal').style.display = 'flex';
+    
+    const setText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
+    
+    setText('claimROIDepositId', depositId);
+    setText('claimROIAmount', pendingROI.toFixed(2) + ' USDT');
+    
+    const modal = document.getElementById('claimROIModal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
 }
 
 // ===== LOAD DEPOSITS =====
