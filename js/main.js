@@ -300,30 +300,59 @@ async function loadDeposits() {
                 const lockEnd = parseInt(summary[5]);
                 const daysLeft = parseInt(summary[6]);
                 
-                // PERBAIKAN: Konversi dailyROI dengan benar dari BigNumber
-                // dailyROI dari contract adalah uint256 dalam basis points
-                let dailyROIValue;
+                // ============================================================
+                // PERBAIKAN DAILY ROI - GUNAKAN fromWei UNTUK NILAI BESAR
+                // ============================================================
                 
-                // Handle berbagai tipe data yang mungkin dari Web3
-                if (typeof summary[7] === 'object' && summary[7] !== null) {
-                    // Jika BigNumber object (Web3 v1.x)
-                    dailyROIValue = summary[7].toString();
-                } else if (typeof summary[7] === 'string') {
-                    // Jika string
-                    dailyROIValue = summary[7];
-                } else if (typeof summary[7] === 'number') {
-                    // Jika number
-                    dailyROIValue = summary[7].toString();
+                // Ambil raw value dari contract
+                let rawDailyROI = summary[7];
+                console.log(`[Deposit ${id}] Raw dailyROI:`, rawDailyROI, '| Type:', typeof rawDailyROI);
+                
+                // Konversi ke string (handle BigNumber, string, number)
+                let dailyROIString;
+                if (typeof rawDailyROI === 'object' && rawDailyROI !== null && rawDailyROI.toString) {
+                    dailyROIString = rawDailyROI.toString();
                 } else {
-                    dailyROIValue = '0';
+                    dailyROIString = String(rawDailyROI);
                 }
                 
-                // Konversi ke angka biasa
-                const dailyROIBN = parseFloat(dailyROIValue);
+                console.log(`[Deposit ${id}] dailyROIString:`, dailyROIString);
                 
-                // PERBAIKAN: Hitung persentase dengan benar
-                // Basis points: 120 = 1.2%, jadi dibagi 100
-                const dailyROIPercent = (dailyROIBN / 100).toFixed(2);
+                // Cek apakah nilai besar (lebih dari 15 digit = kemungkinan wei format)
+                let dailyROINumber;
+                
+                if (dailyROIString.length > 15) {
+                    // Nilai besar - konversi dengan fromWei
+                    try {
+                        dailyROINumber = parseFloat(web3.utils.fromWei(dailyROIString, 'ether'));
+                        console.log(`[Deposit ${id}] Converted fromWei:`, dailyROINumber);
+                    } catch (e) {
+                        // Jika gagal, parse langsung
+                        dailyROINumber = parseFloat(dailyROIString);
+                        console.log(`[Deposit ${id}] Parsed directly:`, dailyROINumber);
+                    }
+                } else {
+                    // Nilai kecil - parse langsung (basis points)
+                    dailyROINumber = parseFloat(dailyROIString);
+                    console.log(`[Deposit ${id}] Small value parsed:`, dailyROINumber);
+                }
+                
+                // Hitung persentase akhir
+                // Jika > 100, anggap basis points (bagi 100)
+                // Jika <= 100, anggap sudah persen
+                let dailyROIPercent;
+                if (dailyROINumber > 100) {
+                    dailyROIPercent = (dailyROINumber / 100).toFixed(2);
+                } else {
+                    dailyROIPercent = dailyROINumber.toFixed(2);
+                }
+                
+                console.log(`[Deposit ${id}] Final dailyROIPercent:`, dailyROIPercent + '%');
+                
+                // Simpan nilai untuk parameter withdraw
+                const dailyROIForWithdraw = dailyROIString;
+                
+                // ============================================================
                 
                 const isActive = summary[8];
                 
@@ -373,7 +402,7 @@ async function loadDeposits() {
                         <button class="btn btn--success btn-sm" onclick="openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}>
                             <i class="fas fa-hand-holding-usd"></i> Claim ROI
                         </button>
-                        <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${isLocked ? 30 : 0}, ${dailyROIBN})">
+                        <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${isLocked ? 30 : 0}, '${dailyROIForWithdraw}')">
                             <i class="fas fa-sign-out-alt"></i> Withdraw Capital
                         </button>
                     </div>
