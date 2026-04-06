@@ -1407,58 +1407,43 @@ body::before {
     color: var(--green-accent);
 }
 
-/* Modal */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.9);
-    backdrop-filter: blur(10px);
-    z-index: 2000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
-    transition: all var(--transition-base);
-    padding: 1rem;
-}
-
-.modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-
+/* Modal Styles */
 .modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background: var(--gradient-card);
     border: var(--glass-border);
     border-radius: var(--radius-2xl);
     padding: 1.5rem;
-    width: 100%;
+    width: 90%;
     max-width: 480px;
     max-height: 85vh;
     overflow-y: auto;
-    transform: scale(0.95);
-    transition: transform var(--transition-base);
+    z-index: 2000;
+    box-shadow: var(--shadow-lg);
 }
 
-.modal-overlay.active .modal {
-    transform: scale(1);
+.modal-content {
+    width: 100%;
 }
 
-.modal__header {
+.modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
 }
 
-.modal__title {
+.modal-title {
     font-family: var(--font-display);
     font-size: 1.25rem;
     font-weight: 600;
+    color: var(--gold);
 }
 
-.modal__close {
+.modal-close {
     width: 32px;
     height: 32px;
     display: flex;
@@ -1472,9 +1457,19 @@ body::before {
     transition: all var(--transition-fast);
 }
 
-.modal__close:hover {
+.modal-close:hover {
     background: rgba(255, 255, 255, 0.2);
     color: var(--text-primary);
+}
+
+.modal-body {
+    margin-bottom: 1.5rem;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
 }
 
 /* Notifications */
@@ -1839,7 +1834,7 @@ body::before {
     font-weight: 500;
 }
 
-/* Perbaikan untuk deposit stats */
+/* Deposit Stats */
 .deposit-stats {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1853,7 +1848,7 @@ body::before {
     }
 }
 
-/* Error state untuk deposits */
+/* Error state for deposits */
 .deposit-card.error {
     border-color: var(--red);
     background: rgba(239, 68, 68, 0.1);
