@@ -251,14 +251,12 @@ function updateLeadershipPage(summary, network) {
 }
 
 // ===== MODAL FUNCTIONS =====
-function openWithdrawModal(depositId, amount, isLocked, daysLeft, dailyROIWei) {
+function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei) {
+    console.log('[openWithdrawModal] Called with:', { depositId, amount, isLocked, feePercent, dailyROIWei });
+    
     // Simpan data untuk digunakan saat confirm
     window.currentWithdrawDepositId = depositId;
     window.currentWithdrawAmount = amount;
-    
-    // ============================================================
-    // PERBAIKAN: Null check untuk semua elemen modal
-    // ============================================================
     
     // Helper function untuk set textContent dengan null check
     const setText = (id, text) => {
@@ -277,9 +275,17 @@ function openWithdrawModal(depositId, amount, isLocked, daysLeft, dailyROIWei) {
     // Konversi dailyROI dari wei ke USDT amount
     let dailyROIDisplay;
     try {
-        const dailyROIUSDT = parseFloat(web3.utils.fromWei(dailyROIWei.toString(), 'ether'));
+        // Handle berbagai tipe input (string, number, object)
+        let dailyROIString;
+        if (typeof dailyROIWei === 'object' && dailyROIWei !== null && dailyROIWei.toString) {
+            dailyROIString = dailyROIWei.toString();
+        } else {
+            dailyROIString = String(dailyROIWei);
+        }
+        
+        const dailyROIUSDT = parseFloat(web3.utils.fromWei(dailyROIString, 'ether'));
         dailyROIDisplay = dailyROIUSDT.toFixed(2) + ' USDT';
-        console.log('[Withdraw Modal] dailyROIWei:', dailyROIWei, '-> USDT:', dailyROIUSDT);
+        console.log('[Withdraw Modal] dailyROIWei:', dailyROIString, '-> USDT:', dailyROIUSDT);
     } catch (e) {
         dailyROIDisplay = '0.00 USDT';
         console.error('[Withdraw Modal] Error converting dailyROI:', e);
@@ -288,29 +294,32 @@ function openWithdrawModal(depositId, amount, isLocked, daysLeft, dailyROIWei) {
     setText('withdrawDailyROI', dailyROIDisplay);
     
     // Hitung fee jika early withdrawal
-    const feePercent = isLocked ? 30 : 0;
-    const feeAmount = (amount * feePercent / 100);
+    const feePercentValue = parseInt(feePercent) || 0;
+    const feeAmount = (amount * feePercentValue / 100);
     const receiveAmount = amount - feeAmount;
     
-    setText('withdrawFee', feeAmount.toFixed(2) + ' USDT (' + feePercent + '%)');
+    setText('withdrawFee', feeAmount.toFixed(2) + ' USDT (' + feePercentValue + '%)');
     setText('withdrawReceive', receiveAmount.toFixed(2) + ' USDT');
     
     // Tampilkan/hidden warning early withdrawal
     const warningEl = document.getElementById('withdrawWarning');
     if (warningEl) {
-        warningEl.style.display = isLocked ? 'block' : 'none';
+        warningEl.style.display = isLocked ? 'flex' : 'none';
     }
     
     // Show modal
     const modal = document.getElementById('withdrawModal');
     if (modal) {
         modal.style.display = 'flex';
+        console.log('[openWithdrawModal] Modal opened successfully');
     } else {
         console.error('[openWithdrawModal] Modal element not found');
     }
 }
 
 function openClaimROIModal(depositId, pendingROI) {
+    console.log('[openClaimROIModal] Called with:', { depositId, pendingROI });
+    
     window.currentClaimDepositId = depositId;
     
     const setText = (id, text) => {
@@ -322,10 +331,15 @@ function openClaimROIModal(depositId, pendingROI) {
     setText('claimROIAmount', pendingROI.toFixed(2) + ' USDT');
     
     const modal = document.getElementById('claimROIModal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+    } else {
+        console.error('[openClaimROIModal] Modal element not found');
+    }
 }
 
 function closeModal(modalId) {
+    console.log('[closeModal] Closing:', modalId);
     const modal = document.getElementById(modalId);
     if (modal) modal.style.display = 'none';
 }
@@ -358,14 +372,16 @@ async function loadDeposits() {
         
         // Clear list tapi pertahankan noDepositsMessage
         depositsList.innerHTML = '';
-        depositsList.appendChild(noDepositsMsg);
+        if (noDepositsMsg) {
+            depositsList.appendChild(noDepositsMsg);
+        }
         
         if (!depositIds || depositIds.length === 0) {
-            noDepositsMsg.style.display = 'block';
+            if (noDepositsMsg) noDepositsMsg.style.display = 'block';
             return;
         }
         
-        noDepositsMsg.style.display = 'none';
+        if (noDepositsMsg) noDepositsMsg.style.display = 'none';
         
         for (const depositId of depositIds) {
             try {
@@ -380,14 +396,10 @@ async function loadDeposits() {
                 const lockEnd = parseInt(summary[5]);
                 const daysLeft = parseInt(summary[6]);
                 
-                // ============================================================
-                // PERBAIKAN DAILY ROI - TAMPILKAN USDT AMOUNT BUKAN PERSENTASE
-                // ============================================================
-                
                 // Ambil raw value dari contract (index 7 = dailyROI)
                 let rawDailyROI = summary[7];
                 
-                // Konversi ke string
+                // Konversi ke string untuk passing ke fungsi
                 let dailyROIString;
                 if (typeof rawDailyROI === 'object' && rawDailyROI !== null && rawDailyROI.toString) {
                     dailyROIString = rawDailyROI.toString();
@@ -395,7 +407,7 @@ async function loadDeposits() {
                     dailyROIString = String(rawDailyROI);
                 }
                 
-                // Konversi ke USDT amount menggunakan fromWei
+                // Konversi ke USDT amount menggunakan fromWei untuk tampilan
                 let dailyROIUSDT;
                 try {
                     dailyROIUSDT = parseFloat(web3.utils.fromWei(dailyROIString, 'ether'));
@@ -406,16 +418,15 @@ async function loadDeposits() {
                 // Format untuk tampilan: 0.06 USDT
                 const dailyROIDisplay = dailyROIUSDT.toFixed(2) + ' USDT';
                 
-                // Simpan nilai untuk parameter withdraw (dalam wei string)
-                const dailyROIForWithdraw = dailyROIString;
-                
-                // ============================================================
-                
                 const isActive = summary[8];
                 
                 if (!isActive) continue;
                 
                 const isLocked = daysLeft > 0;
+                const feePercent = isLocked ? 30 : 0;
+                
+                // PERBAIKAN: Gunakan data attributes atau event listener yang benar
+                // Hindari passing complex objects di onclick string
                 
                 const depositCard = document.createElement('div');
                 depositCard.className = 'deposit-card';
@@ -456,16 +467,35 @@ async function loadDeposits() {
                     </div>
                     
                     <div class="deposit-actions">
-                        <button class="btn btn--success btn-sm" onclick="openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}>
+                        <button class="btn btn--success btn-sm" id="claimBtn_${id}" ${pendingROI < 0.1 ? 'disabled' : ''}>
                             <i class="fas fa-hand-holding-usd"></i> Claim ROI
                         </button>
-                        <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${isLocked ? 30 : 0}, '${dailyROIForWithdraw}')">
+                        <button class="btn btn--danger btn-sm" id="withdrawBtn_${id}">
                             <i class="fas fa-sign-out-alt"></i> Withdraw Capital
                         </button>
                     </div>
                 `;
                 
                 depositsList.appendChild(depositCard);
+                
+                // PERBAIKAN: Attach event listeners setelah element ada di DOM
+                // Ini lebih reliable daripada onclick inline
+                
+                const claimBtn = document.getElementById(`claimBtn_${id}`);
+                if (claimBtn) {
+                    claimBtn.addEventListener('click', function() {
+                        openClaimROIModal(id, pendingROI);
+                    });
+                }
+                
+                const withdrawBtn = document.getElementById(`withdrawBtn_${id}`);
+                if (withdrawBtn) {
+                    withdrawBtn.addEventListener('click', function() {
+                        // Pass dailyROIString sebagai string
+                        openWithdrawModal(id, amount, isLocked, feePercent, dailyROIString);
+                    });
+                }
+                
             } catch (err) {
                 console.error(`Error loading deposit ${depositId}:`, err);
             }
