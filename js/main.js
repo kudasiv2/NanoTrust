@@ -300,16 +300,30 @@ async function loadDeposits() {
                 const lockEnd = parseInt(summary[5]);
                 const daysLeft = parseInt(summary[6]);
                 
-                // PERBAIKAN: Konversi dailyROI dengan benar
-                // dailyROI dari contract adalah uint256 dalam basis points (120 = 1.2%)
-                let dailyROIValue = summary[7];
-                if (typeof dailyROIValue === 'string' || typeof dailyROIValue === 'object') {
-                    dailyROIValue = parseInt(dailyROIValue.toString());
+                // PERBAIKAN: Konversi dailyROI dengan benar dari BigNumber
+                // dailyROI dari contract adalah uint256 dalam basis points
+                let dailyROIValue;
+                
+                // Handle berbagai tipe data yang mungkin dari Web3
+                if (typeof summary[7] === 'object' && summary[7] !== null) {
+                    // Jika BigNumber object (Web3 v1.x)
+                    dailyROIValue = summary[7].toString();
+                } else if (typeof summary[7] === 'string') {
+                    // Jika string
+                    dailyROIValue = summary[7];
+                } else if (typeof summary[7] === 'number') {
+                    // Jika number
+                    dailyROIValue = summary[7].toString();
+                } else {
+                    dailyROIValue = '0';
                 }
                 
+                // Konversi ke angka biasa
+                const dailyROIBN = parseFloat(dailyROIValue);
+                
                 // PERBAIKAN: Hitung persentase dengan benar
-                // Jika dailyROI = 120 (basis points untuk 1.2%), maka 120/100 = 1.2%
-                const dailyROIPercent = (dailyROIValue / 100).toFixed(2);
+                // Basis points: 120 = 1.2%, jadi dibagi 100
+                const dailyROIPercent = (dailyROIBN / 100).toFixed(2);
                 
                 const isActive = summary[8];
                 
@@ -359,7 +373,7 @@ async function loadDeposits() {
                         <button class="btn btn--success btn-sm" onclick="openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}>
                             <i class="fas fa-hand-holding-usd"></i> Claim ROI
                         </button>
-                        <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${isLocked ? 30 : 0}, ${dailyROIValue})">
+                        <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${isLocked ? 30 : 0}, ${dailyROIBN})">
                             <i class="fas fa-sign-out-alt"></i> Withdraw Capital
                         </button>
                     </div>
