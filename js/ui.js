@@ -46,26 +46,7 @@ function showSection(sectionName) {
     if (window.userAccount && window.contract) {
         window.loadUserData();
         if (sectionName === 'deposits') {
-            setTimeout(() => {
-                console.log('[showSection] Calling loadDeposits for section:', sectionName);
-                window.loadDeposits();
-            }, 500);
-        }
-    } else {
-        console.log('[showSection] Wallet not connected, skipping data load');
-        if (sectionName === 'deposits') {
-            const depositsList = document.getElementById('depositsList');
-            if (depositsList) {
-                depositsList.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state__icon"><i class="fas fa-wallet"></i></div>
-                        <p>Please connect your wallet to view deposits</p>
-                        <button class="btn btn--primary" onclick="window.connectWallet()" style="margin-top: 1rem;">
-                            <i class="fas fa-plug"></i> Connect Wallet
-                        </button>
-                    </div>
-                `;
-            }
+            setTimeout(() => window.loadDeposits(), 500);
         }
     }
     
@@ -81,63 +62,93 @@ function toggleMobileMenu() {
 }
 
 // ===== MODAL FUNCTIONS DENGAN OVERLAY =====
-function openModal(modalId) {
+function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
     
-    // Buat overlay jika belum ada
+    // Buat overlay
     let overlay = document.getElementById('modalOverlay');
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'modalOverlay';
-        overlay.className = 'modal-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        `;
         document.body.appendChild(overlay);
     }
     
-    // Pindahkan modal ke dalam overlay
+    // Clone modal ke overlay
     overlay.innerHTML = '';
     const modalClone = modal.cloneNode(true);
     modalClone.style.display = 'block';
+    modalClone.style.position = 'relative';
+    modalClone.style.maxWidth = '480px';
+    modalClone.style.width = '90%';
     overlay.appendChild(modalClone);
     
     // Tampilkan overlay
-    overlay.classList.add('active');
+    overlay.style.opacity = '1';
+    overlay.style.visibility = 'visible';
     document.body.style.overflow = 'hidden';
     
     // Klik di luar modal untuk menutup
-    overlay.addEventListener('click', function(e) {
+    overlay.onclick = function(e) {
         if (e.target === overlay) {
-            closeModal();
+            hideModal();
         }
-    });
+    };
     
     // Close button
     const closeBtn = modalClone.querySelector('.modal-close');
     if (closeBtn) {
-        closeBtn.addEventListener('click', closeModal);
+        closeBtn.onclick = hideModal;
     }
     
     // Cancel button
     const cancelBtn = modalClone.querySelector('.btn--secondary');
     if (cancelBtn && cancelBtn.textContent.includes('Cancel')) {
-        cancelBtn.addEventListener('click', closeModal);
+        cancelBtn.onclick = hideModal;
     }
+    
+    // Tombol ESC
+    document.addEventListener('keydown', escHandler);
 }
 
-function closeModal() {
+function hideModal() {
     const overlay = document.getElementById('modalOverlay');
     if (overlay) {
-        overlay.classList.remove('active');
+        overlay.style.opacity = '0';
+        overlay.style.visibility = 'hidden';
         document.body.style.overflow = '';
         setTimeout(() => {
             overlay.innerHTML = '';
         }, 300);
     }
+    document.removeEventListener('keydown', escHandler);
 }
 
-// Untuk kompatibilitas dengan kode lama
-function closeModalById(modalId) {
-    closeModal();
+function escHandler(e) {
+    if (e.key === 'Escape') {
+        hideModal();
+    }
+}
+
+// Untuk kompatibilitas
+function closeModal() {
+    hideModal();
 }
 
 function copyRefLink() {
@@ -156,21 +167,17 @@ function toggleFaq(element) {
     if (!isActive) item.classList.add('active');
 }
 
-// Helper function for gas estimation with 20% buffer
 async function estimateGasWithBuffer(method, from, value = '0') {
     try {
         const gasEstimate = await method.estimateGas({ from, value });
         const gasWithBuffer = Math.ceil(Number(gasEstimate) * 1.2);
         const gasLimit = Math.min(gasWithBuffer, 3000000);
-        console.log(`Gas estimate: ${gasEstimate}, with buffer: ${gasLimit}`);
         return gasLimit;
     } catch (error) {
-        console.error('Gas estimation failed:', error);
         return 500000;
     }
 }
 
-// ===== EVENT LISTENERS =====
 function setupUIEventListeners() {
     const sidebarToggle = document.getElementById('sidebarToggle');
     if (sidebarToggle) {
@@ -240,14 +247,6 @@ function setupUIEventListeners() {
         } else {
             sidebar?.classList.remove('active');
         }
-        
         mobileMenu?.classList.remove('active');
-    });
-    
-    // Tombol ESC untuk menutup modal
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeModal();
-        }
     });
 }
