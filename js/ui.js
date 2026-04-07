@@ -44,10 +44,10 @@ function showSection(sectionName) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
     if (window.userAccount) {
-        window.loadUserData();
-        if (sectionName === 'deposits') window.loadDeposits();
+        loadUserData();
+        if (sectionName === 'deposits') loadDeposits();
     }
-    if (sectionName === 'home') window.loadVenusTVL();
+    if (sectionName === 'home') loadVenusTVL();
 }
 
 function toggleSidebar() {
@@ -76,8 +76,7 @@ async function estimateGasWithBuffer(method, from, value = '0') {
     try {
         const gasEstimate = await method.estimateGas({ from, value });
         const gasWithBuffer = Math.ceil(Number(gasEstimate) * 1.2);
-        const gasLimit = Math.min(gasWithBuffer, 3000000);
-        return gasLimit;
+        return Math.min(gasWithBuffer, 3000000);
     } catch (error) {
         return 500000;
     }
@@ -85,64 +84,54 @@ async function estimateGasWithBuffer(method, from, value = '0') {
 
 function setupUIEventListeners() {
     document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
-    document.getElementById('connectWalletBtn').addEventListener('click', window.connectWallet);
-    
-    document.getElementById('investAmount')?.addEventListener('input', window.calculateInvestment);
+    document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
+    document.getElementById('investAmount')?.addEventListener('input', calculateInvestment);
     
     if (window.ethereum) {
-        window.ethereum.on('accountsChanged', window.handleAccountsChanged);
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
         window.ethereum.on('chainChanged', () => window.location.reload());
-        window.ethereum.on('disconnect', () => window.handleWalletDisconnect());
+        window.ethereum.on('disconnect', handleWalletDisconnect);
     }
     
     document.addEventListener('click', function(event) {
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
-        
-        if (sidebar?.classList.contains('active')) {
-            if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
-                sidebar.classList.remove('active');
-            }
+        if (sidebar?.classList.contains('active') && !sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+            sidebar.classList.remove('active');
         }
-    });
-    
-    document.addEventListener('click', function(event) {
-        const mobileMenu = document.getElementById('mobileMenu');
-        const sidebarToggle = document.getElementById('sidebarToggle');
         
-        if (mobileMenu?.classList.contains('active')) {
-            if (!mobileMenu.contains(event.target) && !sidebarToggle.contains(event.target)) {
-                mobileMenu.classList.remove('active');
-            }
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenu?.classList.contains('active') && !mobileMenu.contains(event.target) && !sidebarToggle.contains(event.target)) {
+            mobileMenu.classList.remove('active');
         }
     });
     
     document.querySelectorAll('.sidebar__link').forEach(link => {
-        link.addEventListener('click', function() {
-            const sidebar = document.getElementById('sidebar');
-            if (window.innerWidth < 1280) {
-                sidebar.classList.remove('active');
-            }
+        link.addEventListener('click', () => {
+            if (window.innerWidth < 1280) document.getElementById('sidebar').classList.remove('active');
         });
     });
     
     document.querySelectorAll('.mobile-menu__link').forEach(link => {
-        link.addEventListener('click', function() {
-            const mobileMenu = document.getElementById('mobileMenu');
-            mobileMenu.classList.remove('active');
-        });
+        link.addEventListener('click', () => document.getElementById('mobileMenu').classList.remove('active'));
     });
     
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', () => {
         const sidebar = document.getElementById('sidebar');
         const mobileMenu = document.getElementById('mobileMenu');
-        
-        if (window.innerWidth >= 1280) {
-            sidebar?.classList.add('active');
-        } else {
-            sidebar?.classList.remove('active');
-        }
-        
+        if (window.innerWidth >= 1280) sidebar?.classList.add('active');
+        else sidebar?.classList.remove('active');
         mobileMenu?.classList.remove('active');
     });
 }
+
+window.formatUSDT = formatUSDT;
+window.formatNumber = formatNumber;
+window.showNotification = showNotification;
+window.showSection = showSection;
+window.toggleSidebar = toggleSidebar;
+window.toggleMobileMenu = toggleMobileMenu;
+window.copyRefLink = copyRefLink;
+window.toggleFaq = toggleFaq;
+window.estimateGasWithBuffer = estimateGasWithBuffer;
+window.setupUIEventListeners = setupUIEventListeners;
