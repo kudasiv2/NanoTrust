@@ -270,11 +270,7 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei)
     
     const setText = (id, text) => {
         const el = document.getElementById(id);
-        if (el) {
-            el.textContent = text;
-        } else {
-            console.warn(`[openWithdrawModal] Element with id '${id}' not found`);
-        }
+        if (el) el.textContent = text;
     };
     
     setText('withdrawDepositId', depositId);
@@ -285,7 +281,6 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei)
         if (dailyROIWei && dailyROIWei !== 'undefined') {
             dailyROIUSDT = parseFloat(window.web3.utils.fromWei(dailyROIWei.toString(), 'ether'));
         }
-        console.log('[Withdraw Modal] dailyROIWei:', dailyROIWei, '-> USDT:', dailyROIUSDT);
     } catch (e) {
         console.error('[Withdraw Modal] Error converting dailyROI:', e);
     }
@@ -304,13 +299,7 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei)
         warningEl.style.display = isLocked ? 'flex' : 'none';
     }
     
-    const modal = document.getElementById('withdrawModal');
-    if (modal) {
-        modal.style.display = 'flex';
-    } else {
-        console.error('[openWithdrawModal] Modal element not found');
-        showNotification('Error: Withdraw modal not found', 'error');
-    }
+    openModal('withdrawModal');
 }
 
 function openClaimROIModal(depositId, pendingROI) {
@@ -326,18 +315,11 @@ function openClaimROIModal(depositId, pendingROI) {
     setText('claimROIDepositId', depositId);
     setText('claimROIAmount', pendingROI.toFixed(2) + ' USDT');
     
-    const modal = document.getElementById('claimROIModal');
-    if (modal) {
-        modal.style.display = 'flex';
-    } else {
-        console.error('[openClaimROIModal] Modal element not found');
-        showNotification('Error: Claim ROI modal not found', 'error');
-    }
+    openModal('claimROIModal');
 }
 
 // ===== LOAD DEPOSITS =====
 async function loadDeposits() {
-    // Perbaikan: Cek window.userAccount dan window.contract dengan lebih teliti
     console.log('[loadDeposits] Checking connection...');
     console.log('[loadDeposits] window.userAccount:', window.userAccount);
     console.log('[loadDeposits] window.contract:', window.contract);
@@ -346,7 +328,6 @@ async function loadDeposits() {
         console.error('Wallet not connected');
         showNotification('Please connect your wallet first', 'warning');
         
-        // Tampilkan pesan di UI
         const depositsList = document.getElementById('depositsList');
         if (depositsList) {
             depositsList.innerHTML = `
@@ -371,11 +352,6 @@ async function loadDeposits() {
     try {
         console.log('Loading deposits for:', window.userAccount);
         
-        // Cek apakah method getUserDepositIds ada
-        if (!window.contract.methods.getUserDepositIds) {
-            throw new Error('getUserDepositIds method not found');
-        }
-        
         const depositIds = await window.contract.methods.getUserDepositIds(window.userAccount).call();
         console.log('Deposit IDs:', depositIds);
         
@@ -387,7 +363,6 @@ async function loadDeposits() {
             return;
         }
         
-        // Clear list
         depositsList.innerHTML = '';
         
         if (!depositIds || depositIds.length === 0) {
@@ -430,8 +405,6 @@ async function loadDeposits() {
                 const isLocked = daysLeft > 0;
                 const feePercent = isLocked ? 30 : 0;
                 const dailyROIWei = dailyROIString;
-                
-                // Hitung progress lock period
                 const progressPercent = Math.min(100, ((100 - daysLeft) / 100 * 100));
                 
                 const depositCard = document.createElement('div');
@@ -623,7 +596,7 @@ async function submitInvestment() {
 async function confirmClaimROI(depositId) {
     if (!window.userAccount) return;
     
-    closeModal('claimROIModal');
+    closeModal();
     
     try {
         const txWeb3 = new Web3(window.ethereum);
@@ -654,7 +627,7 @@ async function confirmClaimROI(depositId) {
 async function confirmWithdraw(depositId) {
     if (!window.userAccount) return;
     
-    closeModal('withdrawModal');
+    closeModal();
     
     try {
         const txWeb3 = new Web3(window.ethereum);
