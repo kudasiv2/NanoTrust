@@ -244,13 +244,13 @@ function updateLeadershipPage(summary, network) {
     }
 }
 
-// ===== MODAL FUNCTIONS =====
+// ===== MODAL FUNCTIONS DENGAN OVERLAY LANGSUNG =====
 function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei) {
     console.log('[openWithdrawModal] Called with:', { depositId, amount, isLocked, feePercent, dailyROIWei });
     
     window.currentWithdrawDepositId = depositId;
-    window.currentWithdrawAmount = amount;
     
+    // Update konten modal asli
     const setText = (id, text) => {
         const el = document.getElementById(id);
         if (el) el.textContent = text;
@@ -280,8 +280,94 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei)
         warningEl.style.display = isLocked ? 'flex' : 'none';
     }
     
-    // Gunakan modal dengan overlay
-    showModalWithOverlay('withdrawModal');
+    // Buat overlay dan tampilkan modal
+    const modal = document.getElementById('withdrawModal');
+    if (!modal) return;
+    
+    // Hapus overlay yang sudah ada
+    const existingOverlay = document.getElementById('customModalOverlay');
+    if (existingOverlay) existingOverlay.remove();
+    
+    // Buat overlay baru
+    const overlay = document.createElement('div');
+    overlay.id = 'customModalOverlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(8px);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    
+    // Clone modal ke overlay
+    const modalClone = modal.cloneNode(true);
+    modalClone.style.display = 'block';
+    modalClone.style.position = 'relative';
+    modalClone.style.maxWidth = '480px';
+    modalClone.style.width = '90%';
+    modalClone.style.backgroundColor = '#0f0f0f';
+    modalClone.style.border = '1px solid rgba(64, 145, 108, 0.3)';
+    modalClone.style.borderRadius = '22px';
+    modalClone.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5)';
+    
+    overlay.appendChild(modalClone);
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+    
+    // Fungsi untuk menutup modal
+    const closeModalFunc = function() {
+        const ov = document.getElementById('customModalOverlay');
+        if (ov) ov.remove();
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', escHandler);
+    };
+    
+    // Klik di luar modal untuk menutup
+    overlay.onclick = function(e) {
+        if (e.target === overlay) {
+            closeModalFunc();
+        }
+    };
+    
+    // Close button
+    const closeBtn = modalClone.querySelector('.modal-close');
+    if (closeBtn) {
+        closeBtn.onclick = closeModalFunc;
+    }
+    
+    // Cancel button
+    const cancelBtn = modalClone.querySelector('.btn--secondary');
+    if (cancelBtn && cancelBtn.textContent.includes('Cancel')) {
+        cancelBtn.onclick = closeModalFunc;
+    }
+    
+    // Tombol ESC
+    const escHandler = function(e) {
+        if (e.key === 'Escape') {
+            closeModalFunc();
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+    
+    // Confirm button - override onclick
+    const confirmBtn = modalClone.querySelector('.btn--danger');
+    if (confirmBtn) {
+        const oldOnclick = confirmBtn.getAttribute('onclick');
+        confirmBtn.onclick = function() {
+            closeModalFunc();
+            if (oldOnclick) {
+                eval(oldOnclick);
+            } else {
+                window.confirmWithdraw(depositId);
+            }
+        };
+    }
 }
 
 function openClaimROIModal(depositId, pendingROI) {
@@ -297,7 +383,94 @@ function openClaimROIModal(depositId, pendingROI) {
     setText('claimROIDepositId', depositId);
     setText('claimROIAmount', pendingROI.toFixed(2) + ' USDT');
     
-    showModalWithOverlay('claimROIModal');
+    // Buat overlay dan tampilkan modal
+    const modal = document.getElementById('claimROIModal');
+    if (!modal) return;
+    
+    // Hapus overlay yang sudah ada
+    const existingOverlay = document.getElementById('customModalOverlay');
+    if (existingOverlay) existingOverlay.remove();
+    
+    // Buat overlay baru
+    const overlay = document.createElement('div');
+    overlay.id = 'customModalOverlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(8px);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    
+    // Clone modal ke overlay
+    const modalClone = modal.cloneNode(true);
+    modalClone.style.display = 'block';
+    modalClone.style.position = 'relative';
+    modalClone.style.maxWidth = '480px';
+    modalClone.style.width = '90%';
+    modalClone.style.backgroundColor = '#0f0f0f';
+    modalClone.style.border = '1px solid rgba(64, 145, 108, 0.3)';
+    modalClone.style.borderRadius = '22px';
+    modalClone.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5)';
+    
+    overlay.appendChild(modalClone);
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+    
+    // Fungsi untuk menutup modal
+    const closeModalFunc = function() {
+        const ov = document.getElementById('customModalOverlay');
+        if (ov) ov.remove();
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', escHandler);
+    };
+    
+    // Klik di luar modal untuk menutup
+    overlay.onclick = function(e) {
+        if (e.target === overlay) {
+            closeModalFunc();
+        }
+    };
+    
+    // Close button
+    const closeBtn = modalClone.querySelector('.modal-close');
+    if (closeBtn) {
+        closeBtn.onclick = closeModalFunc;
+    }
+    
+    // Cancel button
+    const cancelBtn = modalClone.querySelector('.btn--secondary');
+    if (cancelBtn && cancelBtn.textContent.includes('Cancel')) {
+        cancelBtn.onclick = closeModalFunc;
+    }
+    
+    // Tombol ESC
+    const escHandler = function(e) {
+        if (e.key === 'Escape') {
+            closeModalFunc();
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+    
+    // Confirm button - override onclick
+    const confirmBtn = modalClone.querySelector('.btn--success');
+    if (confirmBtn) {
+        const oldOnclick = confirmBtn.getAttribute('onclick');
+        confirmBtn.onclick = function() {
+            closeModalFunc();
+            if (oldOnclick) {
+                eval(oldOnclick);
+            } else {
+                window.confirmClaimROI(depositId);
+            }
+        };
+    }
 }
 
 // ===== LOAD DEPOSITS =====
@@ -543,8 +716,6 @@ async function submitInvestment() {
 async function confirmClaimROI(depositId) {
     if (!window.userAccount) return;
     
-    closeModalWithOverlay();
-    
     try {
         const txWeb3 = new Web3(window.ethereum);
         const txContract = new txWeb3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
@@ -573,8 +744,6 @@ async function confirmClaimROI(depositId) {
 
 async function confirmWithdraw(depositId) {
     if (!window.userAccount) return;
-    
-    closeModalWithOverlay();
     
     try {
         const txWeb3 = new Web3(window.ethereum);
