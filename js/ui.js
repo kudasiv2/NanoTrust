@@ -43,13 +43,10 @@ function showSection(sectionName) {
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    if (window.userAccount && window.contract) {
+    if (window.userAccount) {
         window.loadUserData();
-        if (sectionName === 'deposits') {
-            setTimeout(() => window.loadDeposits(), 500);
-        }
+        if (sectionName === 'deposits') window.loadDeposits();
     }
-    
     if (sectionName === 'home') window.loadVenusTVL();
 }
 
@@ -61,19 +58,20 @@ function toggleMobileMenu() {
     document.getElementById('mobileMenu').classList.toggle('active');
 }
 
-function closeModal() {
-    if (window.hideModal) {
-        window.hideModal();
-    }
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+    
+    // Hapus overlay jika ada
+    const overlay = document.getElementById('modalOverlay');
+    if (overlay) overlay.remove();
 }
 
 function copyRefLink() {
     const link = document.getElementById('refLink');
-    if (link) {
-        link.select();
-        document.execCommand('copy');
-        showNotification('Referral link copied!', 'success');
-    }
+    link.select();
+    document.execCommand('copy');
+    showNotification('Referral link copied!', 'success');
 }
 
 function toggleFaq(element) {
@@ -83,39 +81,113 @@ function toggleFaq(element) {
     if (!isActive) item.classList.add('active');
 }
 
+// Helper function for gas estimation with 20% buffer
 async function estimateGasWithBuffer(method, from, value = '0') {
     try {
         const gasEstimate = await method.estimateGas({ from, value });
         const gasWithBuffer = Math.ceil(Number(gasEstimate) * 1.2);
         const gasLimit = Math.min(gasWithBuffer, 3000000);
+        console.log(`Gas estimate: ${gasEstimate}, with buffer: ${gasLimit}`);
         return gasLimit;
     } catch (error) {
+        console.error('Gas estimation failed:', error);
         return 500000;
     }
 }
 
+// ===== MODAL DENGAN OVERLAY =====
+function showModalWithOverlay(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    // Buat overlay
+    let overlay = document.getElementById('modalOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'modalOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        document.body.appendChild(overlay);
+    }
+    
+    // Sembunyikan modal asli
+    modal.style.display = 'none';
+    
+    // Clone modal ke overlay
+    overlay.innerHTML = '';
+    const modalClone = modal.cloneNode(true);
+    modalClone.style.display = 'block';
+    modalClone.style.position = 'relative';
+    modalClone.style.maxWidth = '480px';
+    modalClone.style.width = '90%';
+    modalClone.style.backgroundColor = '#0f0f0f';
+    modalClone.style.border = '1px solid rgba(64, 145, 108, 0.3)';
+    modalClone.style.borderRadius = '22px';
+    modalClone.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5)';
+    overlay.appendChild(modalClone);
+    
+    // Klik di luar modal untuk menutup
+    overlay.onclick = function(e) {
+        if (e.target === overlay) {
+            closeModalWithOverlay();
+        }
+    };
+    
+    // Close button
+    const closeBtn = modalClone.querySelector('.modal-close');
+    if (closeBtn) {
+        closeBtn.onclick = closeModalWithOverlay;
+    }
+    
+    // Cancel button
+    const cancelBtn = modalClone.querySelector('.btn--secondary');
+    if (cancelBtn && cancelBtn.textContent.includes('Cancel')) {
+        cancelBtn.onclick = closeModalWithOverlay;
+    }
+    
+    // Tombol ESC
+    document.addEventListener('keydown', escHandler);
+}
+
+function closeModalWithOverlay() {
+    const overlay = document.getElementById('modalOverlay');
+    if (overlay) {
+        overlay.remove();
+    }
+    document.removeEventListener('keydown', escHandler);
+}
+
+function escHandler(e) {
+    if (e.key === 'Escape') {
+        closeModalWithOverlay();
+    }
+}
+
+// ===== EVENT LISTENERS =====
 function setupUIEventListeners() {
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', toggleSidebar);
-    }
+    document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+    document.getElementById('connectWalletBtn').addEventListener('click', window.connectWallet);
     
-    const connectBtn = document.getElementById('connectWalletBtn');
-    if (connectBtn) {
-        connectBtn.addEventListener('click', window.connectWallet);
-    }
-    
-    const investAmount = document.getElementById('investAmount');
-    if (investAmount) {
-        investAmount.addEventListener('input', window.calculateInvestment);
-    }
+    document.getElementById('investAmount')?.addEventListener('input', window.calculateInvestment);
     
     if (window.ethereum) {
         window.ethereum.on('accountsChanged', window.handleAccountsChanged);
         window.ethereum.on('chainChanged', () => window.location.reload());
-        window.ethereum.on('disconnect', () => window.handleWalletDisconnect);
+        window.ethereum.on('disconnect', () => window.handleWalletDisconnect());
     }
     
+    // Close menus when clicking outside
     document.addEventListener('click', function(event) {
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
@@ -163,6 +235,7 @@ function setupUIEventListeners() {
         } else {
             sidebar?.classList.remove('active');
         }
+        
         mobileMenu?.classList.remove('active');
     });
 }
