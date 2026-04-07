@@ -151,7 +151,6 @@ body::before {
     background-clip: text;
 }
 
-/* Header & Navigation */
 .header {
     position: fixed;
     top: 0;
@@ -268,7 +267,6 @@ body::before {
     }
 }
 
-/* Buttons */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -362,7 +360,6 @@ body::before {
     font-size: 0.9375rem;
 }
 
-/* Glass Card */
 .glass-card {
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
@@ -378,7 +375,6 @@ body::before {
     box-shadow: var(--shadow-md);
 }
 
-/* Sidebar */
 .sidebar {
     position: fixed;
     left: 0;
@@ -499,7 +495,6 @@ body::before {
     margin: 0 auto;
 }
 
-/* Hero Section */
 .hero {
     min-height: calc(100vh - 60px);
     display: flex;
@@ -586,7 +581,6 @@ body::before {
     }
 }
 
-/* Stats */
 .stats-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -636,7 +630,6 @@ body::before {
     color: var(--text-muted);
 }
 
-/* Dashboard */
 .dashboard-header {
     background: var(--gradient-card);
     border: var(--glass-border);
@@ -806,7 +799,6 @@ body::before {
     }
 }
 
-/* Invest Section */
 .invest-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -927,7 +919,6 @@ body::before {
     color: var(--gold);
 }
 
-/* Deposits Section */
 .deposits-list {
     display: flex;
     flex-direction: column;
@@ -1024,7 +1015,6 @@ body::before {
     flex-wrap: wrap;
 }
 
-/* Referral Section */
 .referral-hero {
     background: var(--gradient-card);
     border: var(--glass-border);
@@ -1164,7 +1154,6 @@ body::before {
     margin-bottom: 0.75rem;
 }
 
-/* Leadership Section */
 .ranks-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -1309,7 +1298,6 @@ body::before {
     margin-bottom: 0.375rem;
 }
 
-/* FAQ Section */
 .faq-list {
     max-width: 800px;
     margin: 0 auto;
@@ -1372,7 +1360,6 @@ body::before {
     font-size: 0.9375rem;
 }
 
-/* Alerts */
 .alert {
     display: flex;
     align-items: center;
@@ -1407,22 +1394,47 @@ body::before {
     color: var(--green-accent);
 }
 
-/* Modal Styles */
-.modal {
+/* Modal Overlay - Tidak Transparan & Klik di Luar Tutup */
+.modal-overlay {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--gradient-card);
-    border: var(--glass-border);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal {
+    position: relative;
+    background: #0f0f0f;
+    background: linear-gradient(145deg, #0f0f0f, #0a0a0a);
+    border: 1px solid rgba(64, 145, 108, 0.3);
     border-radius: var(--radius-2xl);
     padding: 1.5rem;
     width: 90%;
     max-width: 480px;
     max-height: 85vh;
     overflow-y: auto;
-    z-index: 2000;
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal {
+    transform: scale(1);
 }
 
 .modal-content {
@@ -1434,6 +1446,8 @@ body::before {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(64, 145, 108, 0.2);
 }
 
 .modal-title {
@@ -1470,15 +1484,16 @@ body::before {
     display: flex;
     gap: 0.75rem;
     justify-content: flex-end;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(64, 145, 108, 0.2);
 }
 
-/* Notifications */
 .notification-container {
     position: fixed;
     top: 80px;
     right: 1rem;
     left: 1rem;
-    z-index: 3000;
+    z-index: 10000;
     display: flex;
     flex-direction: column;
     gap: 0.625rem;
@@ -1544,7 +1559,6 @@ body::before {
     }
 }
 
-/* Footer */
 .footer {
     border-top: var(--glass-border);
     padding: 2rem 0;
@@ -1560,32 +1574,6 @@ body::before {
     text-align: center;
 }
 
-.footer__social {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.social-link {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--glass-bg);
-    border: var(--glass-border);
-    border-radius: var(--radius-lg);
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all var(--transition-fast);
-}
-
-.social-link:hover {
-    background: rgba(64, 145, 108, 0.2);
-    border-color: var(--green-accent);
-    color: var(--text-primary);
-}
-
-/* Spinner */
 .spinner {
     display: inline-block;
     width: 18px;
@@ -1604,7 +1592,6 @@ body::before {
     pointer-events: none;
 }
 
-/* Mobile Menu */
 .mobile-menu {
     position: fixed;
     top: 60px;
@@ -1651,7 +1638,6 @@ body::before {
     color: var(--text-primary);
 }
 
-/* Empty State */
 .empty-state {
     text-align: center;
     padding: 3rem;
@@ -1664,7 +1650,6 @@ body::before {
     opacity: 0.5;
 }
 
-/* Transaction Breakdown */
 .tx-breakdown {
     background: rgba(0, 0, 0, 0.3);
     border-radius: var(--radius-lg);
@@ -1690,7 +1675,6 @@ body::before {
     color: var(--text-muted);
 }
 
-/* Wallet Button */
 .wallet-btn {
     display: inline-flex;
     align-items: center;
@@ -1718,7 +1702,6 @@ body::before {
     border-color: rgba(64, 145, 108, 0.3);
 }
 
-/* Info Card */
 .info-card {
     background: var(--glass-bg);
     border: var(--glass-border);
@@ -1762,7 +1745,6 @@ body::before {
     color: var(--green-accent);
 }
 
-/* Contract Badge */
 .contract-badge {
     display: inline-flex;
     align-items: center;
@@ -1786,7 +1768,6 @@ body::before {
     text-decoration: underline;
 }
 
-/* Skeleton Loader */
 .skeleton {
     background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
     background-size: 200% 100%;
@@ -1799,7 +1780,6 @@ body::before {
     100% { background-position: -200% 0; }
 }
 
-/* Progress Bar */
 .progress-bar {
     width: 100%;
     height: 6px;
@@ -1815,7 +1795,6 @@ body::before {
     transition: width var(--transition-base);
 }
 
-/* Referrer Display */
 #refDisplay {
     display: flex;
     align-items: center;
@@ -1834,27 +1813,11 @@ body::before {
     font-weight: 500;
 }
 
-/* Deposit Stats */
-.deposit-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-@media (min-width: 640px) {
-    .deposit-stats {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-/* Error state for deposits */
 .deposit-card.error {
     border-color: var(--red);
     background: rgba(239, 68, 68, 0.1);
 }
 
-/* Loading state */
 .deposit-card.loading {
     opacity: 0.6;
     pointer-events: none;
