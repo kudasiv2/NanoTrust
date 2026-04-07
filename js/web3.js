@@ -205,9 +205,99 @@ async function loadVenusTVL() {
     }
 }
 
+// ===== MODAL FUNCTIONS (ditambahkan di sini) =====
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    // Buat overlay
+    let overlay = document.getElementById('modalOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'modalOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        `;
+        document.body.appendChild(overlay);
+    }
+    
+    // Clone modal ke overlay
+    overlay.innerHTML = '';
+    const modalClone = modal.cloneNode(true);
+    modalClone.style.display = 'block';
+    modalClone.style.position = 'relative';
+    modalClone.style.maxWidth = '480px';
+    modalClone.style.width = '90%';
+    modalClone.style.backgroundColor = '#0f0f0f';
+    modalClone.style.border = '1px solid rgba(64, 145, 108, 0.3)';
+    modalClone.style.borderRadius = '22px';
+    overlay.appendChild(modalClone);
+    
+    // Tampilkan overlay
+    overlay.style.opacity = '1';
+    overlay.style.visibility = 'visible';
+    document.body.style.overflow = 'hidden';
+    
+    // Klik di luar modal untuk menutup
+    overlay.onclick = function(e) {
+        if (e.target === overlay) {
+            hideModal();
+        }
+    };
+    
+    // Close button
+    const closeBtn = modalClone.querySelector('.modal-close');
+    if (closeBtn) {
+        closeBtn.onclick = hideModal;
+    }
+    
+    // Cancel button
+    const cancelBtn = modalClone.querySelector('.btn--secondary');
+    if (cancelBtn && cancelBtn.textContent.includes('Cancel')) {
+        cancelBtn.onclick = hideModal;
+    }
+    
+    // Tombol ESC
+    document.addEventListener('keydown', escHandler);
+}
+
+function hideModal() {
+    const overlay = document.getElementById('modalOverlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.style.visibility = 'hidden';
+        document.body.style.overflow = '';
+        setTimeout(() => {
+            overlay.innerHTML = '';
+        }, 300);
+    }
+    document.removeEventListener('keydown', escHandler);
+}
+
+function escHandler(e) {
+    if (e.key === 'Escape') {
+        hideModal();
+    }
+}
+
 // Expose functions ke window
 window.initWeb3 = initWeb3;
 window.connectWallet = connectWallet;
 window.handleWalletDisconnect = handleWalletDisconnect;
 window.handleAccountsChanged = handleAccountsChanged;
 window.loadVenusTVL = loadVenusTVL;
+window.showModal = showModal;
+window.hideModal = hideModal;
