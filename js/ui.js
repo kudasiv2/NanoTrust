@@ -43,7 +43,6 @@ function showSection(sectionName) {
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    // Load data berdasarkan section yang aktif
     if (window.userAccount && window.contract) {
         window.loadUserData();
         if (sectionName === 'deposits') {
@@ -54,7 +53,6 @@ function showSection(sectionName) {
         }
     } else {
         console.log('[showSection] Wallet not connected, skipping data load');
-        // Jika wallet belum connect, tampilkan alert
         if (sectionName === 'deposits') {
             const depositsList = document.getElementById('depositsList');
             if (depositsList) {
@@ -82,9 +80,64 @@ function toggleMobileMenu() {
     document.getElementById('mobileMenu').classList.toggle('active');
 }
 
-function closeModal(modalId) {
+// ===== MODAL FUNCTIONS DENGAN OVERLAY =====
+function openModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) modal.style.display = 'none';
+    if (!modal) return;
+    
+    // Buat overlay jika belum ada
+    let overlay = document.getElementById('modalOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'modalOverlay';
+        overlay.className = 'modal-overlay';
+        document.body.appendChild(overlay);
+    }
+    
+    // Pindahkan modal ke dalam overlay
+    overlay.innerHTML = '';
+    const modalClone = modal.cloneNode(true);
+    modalClone.style.display = 'block';
+    overlay.appendChild(modalClone);
+    
+    // Tampilkan overlay
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Klik di luar modal untuk menutup
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            closeModal();
+        }
+    });
+    
+    // Close button
+    const closeBtn = modalClone.querySelector('.modal-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
+    
+    // Cancel button
+    const cancelBtn = modalClone.querySelector('.btn--secondary');
+    if (cancelBtn && cancelBtn.textContent.includes('Cancel')) {
+        cancelBtn.addEventListener('click', closeModal);
+    }
+}
+
+function closeModal() {
+    const overlay = document.getElementById('modalOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+        setTimeout(() => {
+            overlay.innerHTML = '';
+        }, 300);
+    }
+}
+
+// Untuk kompatibilitas dengan kode lama
+function closeModalById(modalId) {
+    closeModal();
 }
 
 function copyRefLink() {
@@ -189,5 +242,12 @@ function setupUIEventListeners() {
         }
         
         mobileMenu?.classList.remove('active');
+    });
+    
+    // Tombol ESC untuk menutup modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
     });
 }
