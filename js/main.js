@@ -267,7 +267,11 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei)
     if (warningEl) warningEl.style.display = isLocked ? 'flex' : 'none';
     
     // Tampilkan modal dengan overlay
-    showModal('withdrawModal');
+    if (window.showModal) {
+        window.showModal('withdrawModal');
+    } else {
+        console.error('showModal not available');
+    }
 }
 
 function openClaimROIModal(depositId, pendingROI) {
@@ -283,7 +287,9 @@ function openClaimROIModal(depositId, pendingROI) {
     setText('claimROIDepositId', depositId);
     setText('claimROIAmount', pendingROI.toFixed(2) + ' USDT');
     
-    showModal('claimROIModal');
+    if (window.showModal) {
+        window.showModal('claimROIModal');
+    }
 }
 
 // ===== LOAD DEPOSITS =====
@@ -506,7 +512,7 @@ async function submitInvestment() {
 
 async function confirmClaimROI(depositId) {
     if (!window.userAccount) return;
-    hideModal();
+    if (window.hideModal) window.hideModal();
     
     try {
         const txWeb3 = new Web3(window.ethereum);
@@ -533,7 +539,7 @@ async function confirmClaimROI(depositId) {
 
 async function confirmWithdraw(depositId) {
     if (!window.userAccount) return;
-    hideModal();
+    if (window.hideModal) window.hideModal();
     
     try {
         const txWeb3 = new Web3(window.ethereum);
