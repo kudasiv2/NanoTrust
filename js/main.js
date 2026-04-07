@@ -1,8 +1,8 @@
-// ===== INITIALIZATION =====
+// ===== MAIN APPLICATION =====
 document.addEventListener('DOMContentLoaded', async function() {
-    const initialized = await window.initWeb3();
+    const initialized = await initWeb3();
     if (initialized) {
-        await window.loadVenusTVL();
+        await loadVenusTVL();
         setupUIEventListeners();
         
         const urlParams = new URLSearchParams(window.location.search);
@@ -11,14 +11,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         const refDisplay = document.getElementById('refDisplay');
         
         if (ref && ref.match(/^0x[a-fA-F0-9]{40}$/)) {
-            if(refInput) refInput.value = ref;
-            if(refDisplay) {
+            if (refInput) refInput.value = ref;
+            if (refDisplay) {
                 refDisplay.textContent = ref.substring(0, 6) + '...' + ref.substring(38);
                 refDisplay.classList.add('has-referrer');
             }
         } else {
-            if(refInput) refInput.value = '0x0000000000000000000000000000000000000000';
-            if(refDisplay) {
+            if (refInput) refInput.value = '0x0000000000000000000000000000000000000000';
+            if (refDisplay) {
                 refDisplay.textContent = 'Not detected';
                 refDisplay.classList.remove('has-referrer');
             }
@@ -27,19 +27,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (localStorage.getItem('walletConnected') === 'true' && window.ethereum) {
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    await window.connectWallet();
-                }
-            } catch (e) {
-                console.log('Auto-connect failed');
-            }
+                if (accounts.length > 0) await connectWallet();
+            } catch (e) { console.log('Auto-connect failed'); }
         }
         
-        window.calculateInvestment();
+        calculateInvestment();
     }
 });
 
-// Expose functions
 window.loadUserData = loadUserData;
 window.loadDeposits = loadDeposits;
 window.calculateInvestment = calculateInvestment;
@@ -50,7 +45,6 @@ window.claimReferral = claimReferral;
 window.openWithdrawModal = openWithdrawModal;
 window.openClaimROIModal = openClaimROIModal;
 
-// ===== LOAD USER DATA =====
 async function loadUserData() {
     if (!window.userAccount || !window.contract) return;
     
@@ -59,23 +53,19 @@ async function loadUserData() {
         try {
             userDetails = await window.contract.methods.users(window.userAccount).call();
         } catch (e) {
-            console.log('User not found');
             userDetails = null;
         }
         
         if (!userDetails || !userDetails[10]) {
             resetUserUI();
-            
             try {
                 const balance = await window.usdtContract.methods.balanceOf(window.userAccount).call();
                 document.getElementById('usdtBalance').textContent = formatUSDT(balance, false);
             } catch (e) {}
-            
             try {
                 const remainingSlots = await window.contract.methods.getRemainingDepositSlots(window.userAccount).call();
                 document.getElementById('remainingSlotsHint').innerHTML = `Remaining deposit slots: ${remainingSlots} / 50`;
             } catch(e) {}
-            
             return;
         }
         
@@ -84,10 +74,7 @@ async function loadUserData() {
         const qualified = await window.contract.methods.getQualifiedStatus(window.userAccount).call();
         
         window.userData = { summary, network, qualified, userDetails };
-        
-        if (summary && summary[3] !== undefined) {
-            window.userRank = parseInt(summary[3]);
-        }
+        if (summary && summary[3] !== undefined) window.userRank = parseInt(summary[3]);
         
         updateDashboard(summary, network, userDetails);
         updateInvestPage(summary);
@@ -102,9 +89,7 @@ async function loadUserData() {
         try {
             const remainingSlots = await window.contract.methods.getRemainingDepositSlots(window.userAccount).call();
             document.getElementById('remainingSlotsHint').innerHTML = `Remaining deposit slots: ${remainingSlots} / 50`;
-            if (remainingSlots == 0) {
-                document.getElementById('remainingSlotsHint').style.color = 'var(--red)';
-            }
+            if (remainingSlots == 0) document.getElementById('remainingSlotsHint').style.color = 'var(--red)';
         } catch(e) {}
         
     } catch (error) {
@@ -122,14 +107,11 @@ function resetUserUI() {
     document.getElementById('dashDepositCount').textContent = '0';
     document.getElementById('dashPendingROI').textContent = '0 USDT';
     document.getElementById('dashPendingRef').textContent = '0 USDT';
-    
     document.getElementById('dashDirects').textContent = '0';
     document.getElementById('dashQualified').textContent = '0';
     document.getElementById('dashTeamVolume').textContent = '0 USDT';
     document.getElementById('dashTotalEarned').textContent = '0 USDT';
-    
     document.getElementById('btnClaimRef').disabled = true;
-    
     window.userRankBoost = 0;
 }
 
@@ -141,18 +123,16 @@ function updateDashboard(summary, network, userDetails) {
     const pendingBonuses = summary[2] || '0';
     const rank = summary[3] || 0;
     const activeDepositCount = summary[4] || 0;
-    
     const directs = network[0] || 0;
     const qualified = network[1] || 0;
     const volume = network[2] || '0';
-    
     const totalEarnedNum = parseFloat(window.web3.utils.fromWei(userDetails[5].toString(), 'ether'));
     
     document.getElementById('dashAddress').textContent = `${window.userAccount.slice(0, 4)}...${window.userAccount.slice(-4)}`;
     
     const rankNames = ['No Rank', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
     const rankClasses = ['', 'bronze', 'silver', 'gold', 'platinum', 'diamond'];
-    const rankIcons = ['fas fa-ban', 'fas fa-medal', 'fas fa-medal', 'fas fa-crown', 'fas fa-gem', 'fas fa-star'];
+    const rankIcons = ['fas fa-ban', 'fas fa-medal', 'fas fa-medal', 'fas fa-crown', 'fas fa-gem', 'fas fa-star-of-life'];
     const rankElement = document.getElementById('dashRank');
     rankElement.innerHTML = `<i class="${rankIcons[rank]}"></i> ${rankNames[rank]}`;
     rankElement.className = `rank-badge ${rankClasses[rank] || ''}`;
@@ -166,19 +146,16 @@ function updateDashboard(summary, network, userDetails) {
     document.getElementById('dashDepositCount').textContent = activeDepositCount;
     document.getElementById('dashPendingROI').textContent = pendingROINum.toFixed(2) + ' USDT';
     document.getElementById('dashPendingRef').textContent = pendingBonusesNum.toFixed(2) + ' USDT';
-    
     document.getElementById('dashDirects').textContent = directs;
     document.getElementById('dashQualified').textContent = qualified;
     document.getElementById('dashTeamVolume').textContent = volumeNum.toFixed(2) + ' USDT';
     document.getElementById('dashTotalEarned').textContent = totalEarnedNum.toFixed(2) + ' USDT';
-    
     document.getElementById('btnClaimRef').disabled = pendingBonusesNum < 0.1;
 }
 
 function updateInvestPage(summary) {
     if (!summary) return;
-    const rank = parseInt(summary[3] || 0);
-    window.userRank = rank;
+    window.userRank = parseInt(summary[3] || 0);
     calculateInvestment();
 }
 
@@ -188,7 +165,6 @@ function updateReferralPage(network, qualified, userDetails) {
     const directs = network[0] || 0;
     const qual = network[1] || 0;
     const volume = network[2] || '0';
-    
     const volumeNum = parseFloat(window.web3.utils.fromWei(volume.toString(), 'ether'));
     const totalEarnedNum = parseFloat(window.web3.utils.fromWei(userDetails[5].toString(), 'ether'));
     
@@ -204,12 +180,10 @@ function updateReferralPage(network, qualified, userDetails) {
         const isActive = qualified[i] || false;
         const icon = document.getElementById(`qualIcon${i+1}`);
         const bar = document.getElementById(`qualProgress${i+1}`);
-        
         if (icon) {
             icon.className = 'qualified-status-icon ' + (isActive ? 'active' : 'inactive');
             icon.innerHTML = isActive ? '<i class="fas fa-check"></i>' : '<i class="fas fa-lock"></i>';
         }
-        
         if (bar && i > 0) {
             const requirements = [0, 3, 5, 8, 10];
             const progress = Math.min(100, (qual / requirements[i]) * 100);
@@ -223,13 +197,11 @@ function updateLeadershipPage(summary, network) {
     
     const rank = parseInt(summary[3] || 0);
     const teamVolume = parseFloat(window.web3.utils.fromWei(network[2].toString(), 'ether'));
-    
     const rankRequirements = [5000, 15000, 30000, 50000, 100000];
     
     for (let i = 0; i < 5; i++) {
         const req = rankRequirements[i];
         const progress = Math.min(100, (teamVolume / req) * 100);
-        
         document.getElementById(`rankProgress${i+1}`).textContent = Math.round(progress) + '%';
         document.getElementById(`rankBar${i+1}`).style.width = progress + '%';
         
@@ -244,20 +216,12 @@ function updateLeadershipPage(summary, network) {
     }
 }
 
-// ===== MODAL FUNCTIONS DENGAN OVERLAY LANGSUNG =====
+// Modal Functions
 function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei) {
-    console.log('[openWithdrawModal] Called with:', { depositId, amount, isLocked, feePercent, dailyROIWei });
-    
     window.currentWithdrawDepositId = depositId;
     
-    // Update konten modal asli
-    const setText = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = text;
-    };
-    
-    setText('withdrawDepositId', depositId);
-    setText('withdrawAmount', amount.toFixed(2) + ' USDT');
+    document.getElementById('withdrawDepositId').textContent = depositId;
+    document.getElementById('withdrawAmount').textContent = amount.toFixed(2) + ' USDT';
     
     let dailyROIUSDT = 0;
     try {
@@ -265,133 +229,32 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei)
             dailyROIUSDT = parseFloat(window.web3.utils.fromWei(dailyROIWei.toString(), 'ether'));
         }
     } catch (e) {}
-    
-    setText('withdrawDailyROI', dailyROIUSDT.toFixed(2) + ' USDT');
+    document.getElementById('withdrawDailyROI').textContent = dailyROIUSDT.toFixed(2) + ' USDT';
     
     const feePercentValue = isLocked ? 30 : 0;
     const feeAmount = (amount * feePercentValue / 100);
     const receiveAmount = amount - feeAmount;
+    document.getElementById('withdrawFee').textContent = feeAmount.toFixed(2) + ' USDT (' + feePercentValue + '%)';
+    document.getElementById('withdrawReceive').textContent = receiveAmount.toFixed(2) + ' USDT';
+    document.getElementById('withdrawWarning').style.display = isLocked ? 'flex' : 'none';
     
-    setText('withdrawFee', feeAmount.toFixed(2) + ' USDT (' + feePercentValue + '%)');
-    setText('withdrawReceive', receiveAmount.toFixed(2) + ' USDT');
-    
-    const warningEl = document.getElementById('withdrawWarning');
-    if (warningEl) {
-        warningEl.style.display = isLocked ? 'flex' : 'none';
-    }
-    
-    // Buat overlay dan tampilkan modal
-    const modal = document.getElementById('withdrawModal');
-    if (!modal) return;
-    
-    // Hapus overlay yang sudah ada
-    const existingOverlay = document.getElementById('customModalOverlay');
-    if (existingOverlay) existingOverlay.remove();
-    
-    // Buat overlay baru
-    const overlay = document.createElement('div');
-    overlay.id = 'customModalOverlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.95);
-        backdrop-filter: blur(8px);
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    `;
-    
-    // Clone modal ke overlay
-    const modalClone = modal.cloneNode(true);
-    modalClone.style.display = 'block';
-    modalClone.style.position = 'relative';
-    modalClone.style.maxWidth = '480px';
-    modalClone.style.width = '90%';
-    modalClone.style.backgroundColor = '#0f0f0f';
-    modalClone.style.border = '1px solid rgba(64, 145, 108, 0.3)';
-    modalClone.style.borderRadius = '22px';
-    modalClone.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5)';
-    
-    overlay.appendChild(modalClone);
-    document.body.appendChild(overlay);
-    document.body.style.overflow = 'hidden';
-    
-    // Fungsi untuk menutup modal
-    const closeModalFunc = function() {
-        const ov = document.getElementById('customModalOverlay');
-        if (ov) ov.remove();
-        document.body.style.overflow = '';
-        document.removeEventListener('keydown', escHandler);
-    };
-    
-    // Klik di luar modal untuk menutup
-    overlay.onclick = function(e) {
-        if (e.target === overlay) {
-            closeModalFunc();
-        }
-    };
-    
-    // Close button
-    const closeBtn = modalClone.querySelector('.modal-close');
-    if (closeBtn) {
-        closeBtn.onclick = closeModalFunc;
-    }
-    
-    // Cancel button
-    const cancelBtn = modalClone.querySelector('.btn--secondary');
-    if (cancelBtn && cancelBtn.textContent.includes('Cancel')) {
-        cancelBtn.onclick = closeModalFunc;
-    }
-    
-    // Tombol ESC
-    const escHandler = function(e) {
-        if (e.key === 'Escape') {
-            closeModalFunc();
-        }
-    };
-    document.addEventListener('keydown', escHandler);
-    
-    // Confirm button - override onclick
-    const confirmBtn = modalClone.querySelector('.btn--danger');
-    if (confirmBtn) {
-        const oldOnclick = confirmBtn.getAttribute('onclick');
-        confirmBtn.onclick = function() {
-            closeModalFunc();
-            if (oldOnclick) {
-                eval(oldOnclick);
-            } else {
-                window.confirmWithdraw(depositId);
-            }
-        };
-    }
+    showModalFromElement('withdrawModal');
 }
 
 function openClaimROIModal(depositId, pendingROI) {
-    console.log('[openClaimROIModal] Called with:', { depositId, pendingROI });
-    
     window.currentClaimDepositId = depositId;
-    
-    const setText = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = text;
-    };
-    
-    setText('claimROIDepositId', depositId);
-    setText('claimROIAmount', pendingROI.toFixed(2) + ' USDT');
-    
-    // Buat overlay dan tampilkan modal
-    const modal = document.getElementById('claimROIModal');
+    document.getElementById('claimROIDepositId').textContent = depositId;
+    document.getElementById('claimROIAmount').textContent = pendingROI.toFixed(2) + ' USDT';
+    showModalFromElement('claimROIModal');
+}
+
+function showModalFromElement(modalId) {
+    const modal = document.getElementById(modalId);
     if (!modal) return;
     
-    // Hapus overlay yang sudah ada
     const existingOverlay = document.getElementById('customModalOverlay');
     if (existingOverlay) existingOverlay.remove();
     
-    // Buat overlay baru
     const overlay = document.createElement('div');
     overlay.id = 'customModalOverlay';
     overlay.style.cssText = `
@@ -408,7 +271,6 @@ function openClaimROIModal(depositId, pendingROI) {
         justify-content: center;
     `;
     
-    // Clone modal ke overlay
     const modalClone = modal.cloneNode(true);
     modalClone.style.display = 'block';
     modalClone.style.position = 'relative';
@@ -417,80 +279,37 @@ function openClaimROIModal(depositId, pendingROI) {
     modalClone.style.backgroundColor = '#0f0f0f';
     modalClone.style.border = '1px solid rgba(64, 145, 108, 0.3)';
     modalClone.style.borderRadius = '22px';
-    modalClone.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5)';
     
     overlay.appendChild(modalClone);
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
     
-    // Fungsi untuk menutup modal
-    const closeModalFunc = function() {
+    const closeModal = () => {
         const ov = document.getElementById('customModalOverlay');
         if (ov) ov.remove();
         document.body.style.overflow = '';
         document.removeEventListener('keydown', escHandler);
     };
     
-    // Klik di luar modal untuk menutup
-    overlay.onclick = function(e) {
-        if (e.target === overlay) {
-            closeModalFunc();
-        }
-    };
-    
-    // Close button
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
     const closeBtn = modalClone.querySelector('.modal-close');
-    if (closeBtn) {
-        closeBtn.onclick = closeModalFunc;
-    }
+    if (closeBtn) closeBtn.onclick = closeModal;
+    const cancelBtn = modalClone.querySelector('.modal-cancel');
+    if (cancelBtn) cancelBtn.onclick = closeModal;
     
-    // Cancel button
-    const cancelBtn = modalClone.querySelector('.btn--secondary');
-    if (cancelBtn && cancelBtn.textContent.includes('Cancel')) {
-        cancelBtn.onclick = closeModalFunc;
-    }
-    
-    // Tombol ESC
-    const escHandler = function(e) {
-        if (e.key === 'Escape') {
-            closeModalFunc();
-        }
-    };
+    const escHandler = (e) => { if (e.key === 'Escape') closeModal(); };
     document.addEventListener('keydown', escHandler);
-    
-    // Confirm button - override onclick
-    const confirmBtn = modalClone.querySelector('.btn--success');
-    if (confirmBtn) {
-        const oldOnclick = confirmBtn.getAttribute('onclick');
-        confirmBtn.onclick = function() {
-            closeModalFunc();
-            if (oldOnclick) {
-                eval(oldOnclick);
-            } else {
-                window.confirmClaimROI(depositId);
-            }
-        };
-    }
 }
 
-// ===== LOAD DEPOSITS =====
 async function loadDeposits() {
-    if (!window.userAccount || !window.contract) {
-        console.error('Wallet not connected or contract not initialized');
-        return;
-    }
+    if (!window.userAccount || !window.contract) return;
     
     try {
-        console.log('Loading deposits for:', window.userAccount);
-        
         const depositIds = await window.contract.methods.getUserDepositIds(window.userAccount).call();
-        console.log('Deposit IDs:', depositIds);
-        
         const depositsList = document.getElementById('depositsList');
         const noDepositsMsg = document.getElementById('noDepositsMessage');
         
         if (!depositsList) return;
-        
         depositsList.innerHTML = '';
         if (noDepositsMsg) depositsList.appendChild(noDepositsMsg);
         
@@ -498,33 +317,25 @@ async function loadDeposits() {
             if (noDepositsMsg) noDepositsMsg.style.display = 'block';
             return;
         }
-        
         if (noDepositsMsg) noDepositsMsg.style.display = 'none';
         
         for (const depositId of depositIds) {
             try {
                 const summary = await window.contract.methods.getDepositSummary(window.userAccount, depositId).call();
-                
                 const id = parseInt(summary[0]);
                 const amount = parseFloat(window.web3.utils.fromWei(summary[1].toString(), 'ether'));
                 const depositTime = parseInt(summary[2]);
                 const pendingROI = parseFloat(window.web3.utils.fromWei(summary[4].toString(), 'ether'));
                 const lockEnd = parseInt(summary[5]);
                 const daysLeft = parseInt(summary[6]);
-                
-                let rawDailyROI = summary[7];
-                let dailyROIString = rawDailyROI ? rawDailyROI.toString() : '0';
+                let dailyROIString = summary[7] ? summary[7].toString() : '0';
                 let dailyROIUSDT = 0;
-                
                 try {
                     dailyROIUSDT = parseFloat(window.web3.utils.fromWei(dailyROIString, 'ether'));
                 } catch (e) {
                     dailyROIUSDT = parseFloat(dailyROIString) / 1e18;
                 }
-                
-                const dailyROIDisplay = dailyROIUSDT.toFixed(2) + ' USDT';
                 const isActive = summary[8];
-                
                 if (!isActive) continue;
                 
                 const isLocked = daysLeft > 0;
@@ -536,99 +347,48 @@ async function loadDeposits() {
                 depositCard.className = 'deposit-card';
                 depositCard.innerHTML = `
                     <div class="deposit-card__header">
-                        <div>
-                            <span class="deposit-id">#${id}</span>
-                            <span class="deposit-status ${isLocked ? 'locked' : 'unlocked'}">
-                                ${isLocked ? '🔒 Locked (' + daysLeft + ' days left)' : '🔓 Unlocked'}
-                            </span>
-                        </div>
-                        <div class="deposit-amount" style="font-size: 1.125rem; font-weight: 600;">
-                            ${amount.toFixed(2)} USDT
-                        </div>
+                        <div><span class="deposit-id">#${id}</span><span class="deposit-status ${isLocked ? 'locked' : 'unlocked'}">${isLocked ? '🔒 Locked (' + daysLeft + ' days left)' : '🔓 Unlocked'}</span></div>
+                        <div class="deposit-amount" style="font-size: 1.125rem; font-weight: 600;">${amount.toFixed(2)} USDT</div>
                     </div>
-                    
                     <div class="deposit-stats">
-                        <div class="deposit-stat">
-                            <div class="deposit-stat__value">${dailyROIDisplay}</div>
-                            <div class="deposit-stat__label">Daily ROI Rate</div>
-                        </div>
-                        <div class="deposit-stat">
-                            <div class="deposit-stat__value">${pendingROI.toFixed(2)} USDT</div>
-                            <div class="deposit-stat__label">Pending ROI</div>
-                        </div>
-                        <div class="deposit-stat">
-                            <div class="deposit-stat__value">${new Date(depositTime * 1000).toLocaleDateString()}</div>
-                            <div class="deposit-stat__label">Start Date</div>
-                        </div>
-                        <div class="deposit-stat">
-                            <div class="deposit-stat__value">${new Date(lockEnd * 1000).toLocaleDateString()}</div>
-                            <div class="deposit-stat__label">Unlock Date</div>
-                        </div>
+                        <div class="deposit-stat"><div class="deposit-stat__value">${dailyROIUSDT.toFixed(2)} USDT</div><div class="deposit-stat__label">Daily ROI Rate</div></div>
+                        <div class="deposit-stat"><div class="deposit-stat__value">${pendingROI.toFixed(2)} USDT</div><div class="deposit-stat__label">Pending ROI</div></div>
+                        <div class="deposit-stat"><div class="deposit-stat__value">${new Date(depositTime * 1000).toLocaleDateString()}</div><div class="deposit-stat__label">Start Date</div></div>
+                        <div class="deposit-stat"><div class="deposit-stat__value">${new Date(lockEnd * 1000).toLocaleDateString()}</div><div class="deposit-stat__label">Unlock Date</div></div>
                     </div>
-                    
-                    <div class="progress-bar" style="margin: 0.5rem 0;">
-                        <div class="progress-bar-fill" style="width: ${progressPercent}%"></div>
-                    </div>
-                    
+                    <div class="progress-bar"><div class="progress-bar-fill" style="width: ${progressPercent}%"></div></div>
                     <div class="deposit-actions">
-                        <button class="btn btn--success btn-sm" onclick="window.openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}>
-                            <i class="fas fa-hand-holding-usd"></i> Claim ROI
-                        </button>
-                        <button class="btn btn--danger btn-sm" onclick="window.openWithdrawModal(${id}, ${amount}, ${isLocked}, ${feePercent}, '${dailyROIWei}')">
-                            <i class="fas fa-sign-out-alt"></i> Withdraw Capital
-                        </button>
+                        <button class="btn btn--success btn-sm" onclick="openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}><i class="fas fa-hand-holding-usd"></i> Claim ROI</button>
+                        <button class="btn btn--danger btn-sm" onclick="openWithdrawModal(${id}, ${amount}, ${isLocked}, ${feePercent}, '${dailyROIWei}')"><i class="fas fa-sign-out-alt"></i> Withdraw Capital</button>
                     </div>
                 `;
-                
                 depositsList.appendChild(depositCard);
             } catch (err) {
                 console.error(`Error loading deposit ${depositId}:`, err);
             }
         }
-        
     } catch (error) {
         console.error('Load deposits error:', error);
         showNotification('Error loading deposits: ' + error.message, 'error');
-        
-        const depositsList = document.getElementById('depositsList');
-        if (depositsList) {
-            depositsList.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state__icon"><i class="fas fa-exclamation-triangle"></i></div>
-                    <p>Error loading deposits</p>
-                    <p style="font-size: 0.875rem; color: var(--text-muted);">${error.message}</p>
-                    <button class="btn btn--primary" onclick="window.loadDeposits()" style="margin-top: 1rem;">
-                        <i class="fas fa-sync"></i> Retry
-                    </button>
-                </div>
-            `;
-        }
     }
 }
 
-// ===== INVESTMENT FUNCTIONS =====
 function calculateInvestment() {
     const amount = parseFloat(document.getElementById('investAmount').value) || 0;
     const rank = window.userRank || 0;
-    
     const boostPercents = [0, 0.1, 0.2, 0.3, 0.5, 1.0];
     const currentBoost = boostPercents[rank] || 0;
-    
     const net = amount;
     const baseRate = 0.012;
     const dailyROI = amount * baseRate;
-    
     let boostedDaily = 0;
     let boostText = 'Not active';
-    
     if (currentBoost > 0) {
         const totalRate = baseRate + (currentBoost / 100);
         boostedDaily = amount * totalRate;
         boostText = boostedDaily.toFixed(4) + ' USDT';
     }
-    
     const projection100 = boostedDaily > 0 ? boostedDaily * 100 : dailyROI * 100;
-    
     document.getElementById('calcNet').textContent = net.toFixed(2) + ' USDT';
     document.getElementById('calcDaily').textContent = dailyROI.toFixed(4) + ' USDT';
     document.getElementById('calcDailyBoosted').textContent = boostText;
@@ -640,40 +400,29 @@ async function submitInvestment() {
         showNotification('Please connect your wallet first', 'error');
         return;
     }
-    
     const amount = document.getElementById('investAmount').value;
     if (!amount || parseFloat(amount) < 5) {
         showNotification('Minimum investment is 5 USDT', 'error');
         return;
     }
-    
     let referrer = document.getElementById('referrerAddress').value.trim();
-    
-    if (!referrer || referrer === '') {
-        referrer = '0x0000000000000000000000000000000000000000';
-    } else if (!window.web3.utils.isAddress(referrer)) {
+    if (!referrer || referrer === '') referrer = '0x0000000000000000000000000000000000000000';
+    else if (!window.web3.utils.isAddress(referrer)) {
         showNotification('Invalid referrer address', 'error');
         return;
     }
-    
     const btn = document.getElementById('btnInvest');
     btn.classList.add('loading');
     btn.innerHTML = '<span class="spinner"></span> Processing';
-    
     try {
         const amountWei = window.web3.utils.toWei(amount, 'ether');
-        
         const txWeb3 = new Web3(window.ethereum);
         const txContract = new txWeb3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
         const txUsdtContract = new txWeb3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
-        
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         const fromAccount = accounts[0];
-        
         const balance = await txUsdtContract.methods.balanceOf(fromAccount).call();
-        if (BigInt(balance) < BigInt(amountWei)) {
-            throw new Error('Insufficient USDT balance');
-        }
+        if (BigInt(balance) < BigInt(amountWei)) throw new Error('Insufficient USDT balance');
         
         showNotification('Approving USDT...', 'info');
         const allowance = await txUsdtContract.methods.allowance(fromAccount, CONFIG.CONTRACT_ADDRESS).call();
@@ -689,7 +438,6 @@ async function submitInvestment() {
         const investMethod = txContract.methods.invest(amountWei, referrer);
         const investGas = await estimateGasWithBuffer(investMethod, fromAccount);
         const investTx = await investMethod.send({ from: fromAccount, gas: investGas });
-        
         if (investTx.status) {
             showNotification('Investment successful!', 'success');
             document.getElementById('investAmount').value = '100';
@@ -697,7 +445,6 @@ async function submitInvestment() {
             await loadUserData();
             showSection('dashboard');
         }
-        
     } catch (error) {
         console.error('Investment error:', error);
         let msg = error.message || 'Unknown error';
@@ -715,19 +462,15 @@ async function submitInvestment() {
 
 async function confirmClaimROI(depositId) {
     if (!window.userAccount) return;
-    
     try {
         const txWeb3 = new Web3(window.ethereum);
         const txContract = new txWeb3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
-        
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         const fromAccount = accounts[0];
-        
         showNotification('Claiming ROI...', 'info');
         const roiMethod = txContract.methods.withdrawROI(depositId);
         const roiGas = await estimateGasWithBuffer(roiMethod, fromAccount);
         const tx = await roiMethod.send({ from: fromAccount, gas: roiGas });
-        
         if (tx.status) {
             showNotification('ROI claimed successfully!', 'success');
             await loadUserData();
@@ -744,19 +487,15 @@ async function confirmClaimROI(depositId) {
 
 async function confirmWithdraw(depositId) {
     if (!window.userAccount) return;
-    
     try {
         const txWeb3 = new Web3(window.ethereum);
         const txContract = new txWeb3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
-        
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         const fromAccount = accounts[0];
-        
         showNotification('Processing withdrawal...', 'info');
         const withdrawMethod = txContract.methods.withdrawCapital(depositId);
         const withdrawGas = await estimateGasWithBuffer(withdrawMethod, fromAccount);
         const tx = await withdrawMethod.send({ from: fromAccount, gas: withdrawGas });
-        
         if (tx.status) {
             showNotification('Withdrawal successful!', 'success');
             await loadUserData();
@@ -773,24 +512,19 @@ async function confirmWithdraw(depositId) {
 
 async function claimReferral() {
     if (!window.userAccount) return;
-    
     const btn = document.getElementById('btnClaimRef');
     const original = btn.innerHTML;
     btn.classList.add('loading');
     btn.innerHTML = '<span class="spinner"></span> Processing';
-    
     try {
         const txWeb3 = new Web3(window.ethereum);
         const txContract = new txWeb3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
-        
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         const fromAccount = accounts[0];
-        
         showNotification('Claiming referral bonuses...', 'info');
         const referralMethod = txContract.methods.withdrawReferralBonuses();
         const referralGas = await estimateGasWithBuffer(referralMethod, fromAccount);
         const tx = await referralMethod.send({ from: fromAccount, gas: referralGas });
-        
         if (tx.status) {
             showNotification('Referral bonuses claimed successfully!', 'success');
             await loadUserData();
