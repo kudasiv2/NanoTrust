@@ -29,10 +29,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const accounts = await window.ethereum.request({ method: 'eth_accounts' });
                 if (accounts.length > 0) {
                     await window.connectWallet();
-                    const activeSection = document.querySelector('.section.active');
-                    if (activeSection && activeSection.id === 'deposits') {
-                        await window.loadDeposits();
-                    }
                 }
             } catch (e) {
                 console.log('Auto-connect failed');
@@ -69,14 +65,17 @@ async function loadUserData() {
         
         if (!userDetails || !userDetails[10]) {
             resetUserUI();
+            
             try {
                 const balance = await window.usdtContract.methods.balanceOf(window.userAccount).call();
                 document.getElementById('usdtBalance').textContent = formatUSDT(balance, false);
             } catch (e) {}
+            
             try {
                 const remainingSlots = await window.contract.methods.getRemainingDepositSlots(window.userAccount).call();
                 document.getElementById('remainingSlotsHint').innerHTML = `Remaining deposit slots: ${remainingSlots} / 50`;
             } catch(e) {}
+            
             return;
         }
         
@@ -85,7 +84,10 @@ async function loadUserData() {
         const qualified = await window.contract.methods.getQualifiedStatus(window.userAccount).call();
         
         window.userData = { summary, network, qualified, userDetails };
-        if (summary && summary[3] !== undefined) window.userRank = parseInt(summary[3]);
+        
+        if (summary && summary[3] !== undefined) {
+            window.userRank = parseInt(summary[3]);
+        }
         
         updateDashboard(summary, network, userDetails);
         updateInvestPage(summary);
@@ -100,11 +102,10 @@ async function loadUserData() {
         try {
             const remainingSlots = await window.contract.methods.getRemainingDepositSlots(window.userAccount).call();
             document.getElementById('remainingSlotsHint').innerHTML = `Remaining deposit slots: ${remainingSlots} / 50`;
-            if (remainingSlots == 0) document.getElementById('remainingSlotsHint').style.color = 'var(--red)';
+            if (remainingSlots == 0) {
+                document.getElementById('remainingSlotsHint').style.color = 'var(--red)';
+            }
         } catch(e) {}
-        
-        const activeSection = document.querySelector('.section.active');
-        if (activeSection && activeSection.id === 'deposits') await loadDeposits();
         
     } catch (error) {
         console.error('Load user data error:', error);
@@ -116,16 +117,20 @@ function resetUserUI() {
     document.getElementById('dashAddress').textContent = `${window.userAccount.slice(0, 4)}...${window.userAccount.slice(-4)}`;
     document.getElementById('dashRank').innerHTML = '<i class="fas fa-ban"></i> No Rank';
     document.getElementById('dashRank').className = 'rank-badge';
+    
     document.getElementById('dashTotalActive').textContent = '0 USDT';
     document.getElementById('dashDepositCount').textContent = '0';
     document.getElementById('dashPendingROI').textContent = '0 USDT';
     document.getElementById('dashPendingRef').textContent = '0 USDT';
+    
     document.getElementById('dashDirects').textContent = '0';
     document.getElementById('dashQualified').textContent = '0';
     document.getElementById('dashTeamVolume').textContent = '0 USDT';
     document.getElementById('dashTotalEarned').textContent = '0 USDT';
-    const btnClaim = document.getElementById('btnClaimRef');
-    if (btnClaim) btnClaim.disabled = true;
+    
+    document.getElementById('btnClaimRef').disabled = true;
+    
+    window.userRankBoost = 0;
 }
 
 function updateDashboard(summary, network, userDetails) {
@@ -136,9 +141,11 @@ function updateDashboard(summary, network, userDetails) {
     const pendingBonuses = summary[2] || '0';
     const rank = summary[3] || 0;
     const activeDepositCount = summary[4] || 0;
+    
     const directs = network[0] || 0;
     const qualified = network[1] || 0;
     const volume = network[2] || '0';
+    
     const totalEarnedNum = parseFloat(window.web3.utils.fromWei(userDetails[5].toString(), 'ether'));
     
     document.getElementById('dashAddress').textContent = `${window.userAccount.slice(0, 4)}...${window.userAccount.slice(-4)}`;
@@ -159,18 +166,19 @@ function updateDashboard(summary, network, userDetails) {
     document.getElementById('dashDepositCount').textContent = activeDepositCount;
     document.getElementById('dashPendingROI').textContent = pendingROINum.toFixed(2) + ' USDT';
     document.getElementById('dashPendingRef').textContent = pendingBonusesNum.toFixed(2) + ' USDT';
+    
     document.getElementById('dashDirects').textContent = directs;
     document.getElementById('dashQualified').textContent = qualified;
     document.getElementById('dashTeamVolume').textContent = volumeNum.toFixed(2) + ' USDT';
     document.getElementById('dashTotalEarned').textContent = totalEarnedNum.toFixed(2) + ' USDT';
     
-    const btnClaim = document.getElementById('btnClaimRef');
-    if (btnClaim) btnClaim.disabled = pendingBonusesNum < 0.1;
+    document.getElementById('btnClaimRef').disabled = pendingBonusesNum < 0.1;
 }
 
 function updateInvestPage(summary) {
     if (!summary) return;
-    window.userRank = parseInt(summary[3] || 0);
+    const rank = parseInt(summary[3] || 0);
+    window.userRank = rank;
     calculateInvestment();
 }
 
@@ -180,6 +188,7 @@ function updateReferralPage(network, qualified, userDetails) {
     const directs = network[0] || 0;
     const qual = network[1] || 0;
     const volume = network[2] || '0';
+    
     const volumeNum = parseFloat(window.web3.utils.fromWei(volume.toString(), 'ether'));
     const totalEarnedNum = parseFloat(window.web3.utils.fromWei(userDetails[5].toString(), 'ether'));
     
@@ -195,10 +204,12 @@ function updateReferralPage(network, qualified, userDetails) {
         const isActive = qualified[i] || false;
         const icon = document.getElementById(`qualIcon${i+1}`);
         const bar = document.getElementById(`qualProgress${i+1}`);
+        
         if (icon) {
             icon.className = 'qualified-status-icon ' + (isActive ? 'active' : 'inactive');
             icon.innerHTML = isActive ? '<i class="fas fa-check"></i>' : '<i class="fas fa-lock"></i>';
         }
+        
         if (bar && i > 0) {
             const requirements = [0, 3, 5, 8, 10];
             const progress = Math.min(100, (qual / requirements[i]) * 100);
@@ -209,26 +220,26 @@ function updateReferralPage(network, qualified, userDetails) {
 
 function updateLeadershipPage(summary, network) {
     if (!summary || !network) return;
+    
     const rank = parseInt(summary[3] || 0);
     const teamVolume = parseFloat(window.web3.utils.fromWei(network[2].toString(), 'ether'));
+    
     const rankRequirements = [5000, 15000, 30000, 50000, 100000];
     
     for (let i = 0; i < 5; i++) {
         const req = rankRequirements[i];
         const progress = Math.min(100, (teamVolume / req) * 100);
-        const progressEl = document.getElementById(`rankProgress${i+1}`);
-        const barEl = document.getElementById(`rankBar${i+1}`);
-        const cardEl = document.getElementById(`rankCard${i+1}`);
-        if (progressEl) progressEl.textContent = Math.round(progress) + '%';
-        if (barEl) barEl.style.width = progress + '%';
-        if (cardEl) {
-            if (rank === i + 1) {
-                cardEl.style.boxShadow = '0 0 30px rgba(64, 145, 108, 0.5)';
-                cardEl.style.borderColor = 'var(--green-accent)';
-            } else {
-                cardEl.style.boxShadow = '';
-                cardEl.style.borderColor = '';
-            }
+        
+        document.getElementById(`rankProgress${i+1}`).textContent = Math.round(progress) + '%';
+        document.getElementById(`rankBar${i+1}`).style.width = progress + '%';
+        
+        const card = document.getElementById(`rankCard${i+1}`);
+        if (rank === i + 1) {
+            card.style.boxShadow = '0 0 30px rgba(64, 145, 108, 0.5)';
+            card.style.borderColor = 'var(--green-accent)';
+        } else {
+            card.style.boxShadow = '';
+            card.style.borderColor = '';
         }
     }
 }
@@ -238,8 +249,8 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei)
     console.log('[openWithdrawModal] Called with:', { depositId, amount, isLocked, feePercent, dailyROIWei });
     
     window.currentWithdrawDepositId = depositId;
+    window.currentWithdrawAmount = amount;
     
-    // Update modal content
     const setText = (id, text) => {
         const el = document.getElementById(id);
         if (el) el.textContent = text;
@@ -254,6 +265,7 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei)
             dailyROIUSDT = parseFloat(window.web3.utils.fromWei(dailyROIWei.toString(), 'ether'));
         }
     } catch (e) {}
+    
     setText('withdrawDailyROI', dailyROIUSDT.toFixed(2) + ' USDT');
     
     const feePercentValue = isLocked ? 30 : 0;
@@ -264,14 +276,12 @@ function openWithdrawModal(depositId, amount, isLocked, feePercent, dailyROIWei)
     setText('withdrawReceive', receiveAmount.toFixed(2) + ' USDT');
     
     const warningEl = document.getElementById('withdrawWarning');
-    if (warningEl) warningEl.style.display = isLocked ? 'flex' : 'none';
-    
-    // Tampilkan modal dengan overlay
-    if (window.showModal) {
-        window.showModal('withdrawModal');
-    } else {
-        console.error('showModal not available');
+    if (warningEl) {
+        warningEl.style.display = isLocked ? 'flex' : 'none';
     }
+    
+    // Gunakan modal dengan overlay
+    showModalWithOverlay('withdrawModal');
 }
 
 function openClaimROIModal(depositId, pendingROI) {
@@ -287,50 +297,41 @@ function openClaimROIModal(depositId, pendingROI) {
     setText('claimROIDepositId', depositId);
     setText('claimROIAmount', pendingROI.toFixed(2) + ' USDT');
     
-    if (window.showModal) {
-        window.showModal('claimROIModal');
-    }
+    showModalWithOverlay('claimROIModal');
 }
 
 // ===== LOAD DEPOSITS =====
 async function loadDeposits() {
     if (!window.userAccount || !window.contract) {
-        console.log('Wallet not connected or contract not initialized');
-        const depositsList = document.getElementById('depositsList');
-        if (depositsList) {
-            depositsList.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state__icon"><i class="fas fa-wallet"></i></div>
-                    <p>Please connect your wallet to view deposits</p>
-                    <button class="btn btn--primary" onclick="window.connectWallet()" style="margin-top: 1rem;">
-                        <i class="fas fa-plug"></i> Connect Wallet
-                    </button>
-                </div>
-            `;
-        }
+        console.error('Wallet not connected or contract not initialized');
         return;
     }
     
     try {
+        console.log('Loading deposits for:', window.userAccount);
+        
         const depositIds = await window.contract.methods.getUserDepositIds(window.userAccount).call();
+        console.log('Deposit IDs:', depositIds);
+        
         const depositsList = document.getElementById('depositsList');
         const noDepositsMsg = document.getElementById('noDepositsMessage');
         
         if (!depositsList) return;
+        
         depositsList.innerHTML = '';
+        if (noDepositsMsg) depositsList.appendChild(noDepositsMsg);
         
         if (!depositIds || depositIds.length === 0) {
-            if (noDepositsMsg) {
-                depositsList.appendChild(noDepositsMsg);
-                noDepositsMsg.style.display = 'block';
-            }
+            if (noDepositsMsg) noDepositsMsg.style.display = 'block';
             return;
         }
+        
         if (noDepositsMsg) noDepositsMsg.style.display = 'none';
         
         for (const depositId of depositIds) {
             try {
                 const summary = await window.contract.methods.getDepositSummary(window.userAccount, depositId).call();
+                
                 const id = parseInt(summary[0]);
                 const amount = parseFloat(window.web3.utils.fromWei(summary[1].toString(), 'ether'));
                 const depositTime = parseInt(summary[2]);
@@ -341,6 +342,7 @@ async function loadDeposits() {
                 let rawDailyROI = summary[7];
                 let dailyROIString = rawDailyROI ? rawDailyROI.toString() : '0';
                 let dailyROIUSDT = 0;
+                
                 try {
                     dailyROIUSDT = parseFloat(window.web3.utils.fromWei(dailyROIString, 'ether'));
                 } catch (e) {
@@ -349,6 +351,7 @@ async function loadDeposits() {
                 
                 const dailyROIDisplay = dailyROIUSDT.toFixed(2) + ' USDT';
                 const isActive = summary[8];
+                
                 if (!isActive) continue;
                 
                 const isLocked = daysLeft > 0;
@@ -370,6 +373,7 @@ async function loadDeposits() {
                             ${amount.toFixed(2)} USDT
                         </div>
                     </div>
+                    
                     <div class="deposit-stats">
                         <div class="deposit-stat">
                             <div class="deposit-stat__value">${dailyROIDisplay}</div>
@@ -388,9 +392,11 @@ async function loadDeposits() {
                             <div class="deposit-stat__label">Unlock Date</div>
                         </div>
                     </div>
+                    
                     <div class="progress-bar" style="margin: 0.5rem 0;">
                         <div class="progress-bar-fill" style="width: ${progressPercent}%"></div>
                     </div>
+                    
                     <div class="deposit-actions">
                         <button class="btn btn--success btn-sm" onclick="window.openClaimROIModal(${id}, ${pendingROI})" ${pendingROI < 0.1 ? 'disabled' : ''}>
                             <i class="fas fa-hand-holding-usd"></i> Claim ROI
@@ -400,14 +406,30 @@ async function loadDeposits() {
                         </button>
                     </div>
                 `;
+                
                 depositsList.appendChild(depositCard);
             } catch (err) {
                 console.error(`Error loading deposit ${depositId}:`, err);
             }
         }
+        
     } catch (error) {
         console.error('Load deposits error:', error);
-        showNotification('Error loading deposits', 'error');
+        showNotification('Error loading deposits: ' + error.message, 'error');
+        
+        const depositsList = document.getElementById('depositsList');
+        if (depositsList) {
+            depositsList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state__icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <p>Error loading deposits</p>
+                    <p style="font-size: 0.875rem; color: var(--text-muted);">${error.message}</p>
+                    <button class="btn btn--primary" onclick="window.loadDeposits()" style="margin-top: 1rem;">
+                        <i class="fas fa-sync"></i> Retry
+                    </button>
+                </div>
+            `;
+        }
     }
 }
 
@@ -415,29 +437,29 @@ async function loadDeposits() {
 function calculateInvestment() {
     const amount = parseFloat(document.getElementById('investAmount').value) || 0;
     const rank = window.userRank || 0;
+    
     const boostPercents = [0, 0.1, 0.2, 0.3, 0.5, 1.0];
     const currentBoost = boostPercents[rank] || 0;
+    
+    const net = amount;
     const baseRate = 0.012;
     const dailyROI = amount * baseRate;
+    
     let boostedDaily = 0;
     let boostText = 'Not active';
     
     if (currentBoost > 0) {
-        boostedDaily = amount * (baseRate + currentBoost / 100);
+        const totalRate = baseRate + (currentBoost / 100);
+        boostedDaily = amount * totalRate;
         boostText = boostedDaily.toFixed(4) + ' USDT';
     }
     
     const projection100 = boostedDaily > 0 ? boostedDaily * 100 : dailyROI * 100;
     
-    const calcNet = document.getElementById('calcNet');
-    const calcDaily = document.getElementById('calcDaily');
-    const calcDailyBoosted = document.getElementById('calcDailyBoosted');
-    const calc100Days = document.getElementById('calc100Days');
-    
-    if (calcNet) calcNet.textContent = amount.toFixed(2) + ' USDT';
-    if (calcDaily) calcDaily.textContent = dailyROI.toFixed(4) + ' USDT';
-    if (calcDailyBoosted) calcDailyBoosted.textContent = boostText;
-    if (calc100Days) calc100Days.textContent = projection100.toFixed(2) + ' USDT';
+    document.getElementById('calcNet').textContent = net.toFixed(2) + ' USDT';
+    document.getElementById('calcDaily').textContent = dailyROI.toFixed(4) + ' USDT';
+    document.getElementById('calcDailyBoosted').textContent = boostText;
+    document.getElementById('calc100Days').textContent = projection100.toFixed(2) + ' USDT';
 }
 
 async function submitInvestment() {
@@ -453,8 +475,10 @@ async function submitInvestment() {
     }
     
     let referrer = document.getElementById('referrerAddress').value.trim();
-    if (!referrer || referrer === '') referrer = '0x0000000000000000000000000000000000000000';
-    else if (!window.web3.utils.isAddress(referrer)) {
+    
+    if (!referrer || referrer === '') {
+        referrer = '0x0000000000000000000000000000000000000000';
+    } else if (!window.web3.utils.isAddress(referrer)) {
         showNotification('Invalid referrer address', 'error');
         return;
     }
@@ -465,14 +489,18 @@ async function submitInvestment() {
     
     try {
         const amountWei = window.web3.utils.toWei(amount, 'ether');
+        
         const txWeb3 = new Web3(window.ethereum);
         const txContract = new txWeb3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
         const txUsdtContract = new txWeb3.eth.Contract(USDT_ABI, CONFIG.USDT_ADDRESS);
+        
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         const fromAccount = accounts[0];
         
         const balance = await txUsdtContract.methods.balanceOf(fromAccount).call();
-        if (BigInt(balance) < BigInt(amountWei)) throw new Error('Insufficient USDT balance');
+        if (BigInt(balance) < BigInt(amountWei)) {
+            throw new Error('Insufficient USDT balance');
+        }
         
         showNotification('Approving USDT...', 'info');
         const allowance = await txUsdtContract.methods.allowance(fromAccount, CONFIG.CONTRACT_ADDRESS).call();
@@ -496,7 +524,9 @@ async function submitInvestment() {
             await loadUserData();
             showSection('dashboard');
         }
+        
     } catch (error) {
+        console.error('Investment error:', error);
         let msg = error.message || 'Unknown error';
         if (msg.includes('user rejected')) msg = 'Transaction cancelled by user';
         else if (msg.includes('insufficient funds')) msg = 'Insufficient BNB for gas';
@@ -512,11 +542,13 @@ async function submitInvestment() {
 
 async function confirmClaimROI(depositId) {
     if (!window.userAccount) return;
-    if (window.hideModal) window.hideModal();
+    
+    closeModalWithOverlay();
     
     try {
         const txWeb3 = new Web3(window.ethereum);
         const txContract = new txWeb3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
+        
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         const fromAccount = accounts[0];
         
@@ -531,19 +563,23 @@ async function confirmClaimROI(depositId) {
             await loadDeposits();
         }
     } catch (error) {
+        console.error('Claim ROI error:', error);
         let msg = error.message || 'Unknown error';
         if (msg.includes('user rejected')) msg = 'Transaction cancelled';
+        else if (msg.includes('ROI below minimum')) msg = 'ROI below minimum withdraw (0.1 USDT)';
         showNotification('Failed: ' + msg, 'error');
     }
 }
 
 async function confirmWithdraw(depositId) {
     if (!window.userAccount) return;
-    if (window.hideModal) window.hideModal();
+    
+    closeModalWithOverlay();
     
     try {
         const txWeb3 = new Web3(window.ethereum);
         const txContract = new txWeb3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
+        
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         const fromAccount = accounts[0];
         
@@ -558,8 +594,10 @@ async function confirmWithdraw(depositId) {
             await loadDeposits();
         }
     } catch (error) {
+        console.error('Withdraw error:', error);
         let msg = error.message || 'Unknown error';
         if (msg.includes('user rejected')) msg = 'Transaction cancelled';
+        else if (msg.includes('Insufficient balance')) msg = 'Insufficient balance to withdraw';
         showNotification('Failed: ' + msg, 'error');
     }
 }
@@ -575,6 +613,7 @@ async function claimReferral() {
     try {
         const txWeb3 = new Web3(window.ethereum);
         const txContract = new txWeb3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
+        
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         const fromAccount = accounts[0];
         
@@ -588,8 +627,10 @@ async function claimReferral() {
             await loadUserData();
         }
     } catch (error) {
+        console.error('Claim referral error:', error);
         let msg = error.message || 'Unknown error';
         if (msg.includes('user rejected')) msg = 'Transaction cancelled';
+        else if (msg.includes('Bonus below minimum')) msg = 'Bonus below minimum withdraw (0.1 USDT)';
         showNotification('Failed: ' + msg, 'error');
     } finally {
         btn.classList.remove('loading');
