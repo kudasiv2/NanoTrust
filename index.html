@@ -220,7 +220,6 @@
                 </div>
 
                 <div id="dashboardContent" style="display: none;">
-                    <!-- Profile Header -->
                     <div class="dashboard-header">
                         <div class="dashboard-profile">
                             <div class="dashboard-avatar">
@@ -234,7 +233,6 @@
                         </div>
                     </div>
 
-                    <!-- Quick Stats -->
                     <div class="dashboard-grid">
                         <div class="dashboard-card">
                             <div class="dashboard-card__icon"><i class="fas fa-wallet"></i></div>
@@ -258,7 +256,6 @@
                         </div>
                     </div>
 
-                    <!-- Network Stats -->
                     <div class="info-card">
                         <div class="info-card__title">
                             <i class="fas fa-network-wired" style="color: var(--green-accent);"></i>
@@ -284,7 +281,6 @@
                         </div>
                     </div>
 
-                    <!-- Quick Actions -->
                     <div class="quick-actions" style="margin-top: 1rem;">
                         <button class="btn btn--primary" onclick="showSection('invest')">
                             <i class="fas fa-plus"></i> New Deposit
@@ -463,7 +459,6 @@
                 </div>
 
                 <div id="referralContent" style="display: none;">
-                    <!-- Referral Link -->
                     <div class="referral-hero">
                         <h3 style="margin-bottom: 0.5rem;">Your Referral Link</h3>
                         <p style="color: var(--text-muted); font-size: 0.9375rem;">Share this link to invite friends and earn commissions instantly</p>
@@ -475,7 +470,6 @@
                         </div>
                     </div>
 
-                    <!-- Team Stats -->
                     <div class="referral-stats">
                         <div class="dashboard-card">
                             <div class="dashboard-card__icon"><i class="fas fa-users"></i></div>
@@ -499,7 +493,6 @@
                         </div>
                     </div>
 
-                    <!-- Commission Levels -->
                     <h3 style="margin-bottom: 1rem; font-size: 1.125rem;">
                         <i class="fas fa-layer-group" style="color: var(--green-accent); margin-right: 0.5rem;"></i>
                         Commission Structure (5 Levels)
@@ -532,7 +525,6 @@
                         </div>
                     </div>
 
-                    <!-- Qualification Status -->
                     <h3 style="margin-bottom: 1rem; font-size: 1.125rem;">
                         <i class="fas fa-medal" style="color: var(--green-accent); margin-right: 0.5rem;"></i>
                         Qualification Requirements
@@ -619,7 +611,6 @@
                 </div>
 
                 <div class="ranks-grid">
-                    <!-- Bronze -->
                     <div class="rank-card bronze" id="rankCard1">
                         <div class="rank-card__header">
                             <div class="rank-icon"><i class="fas fa-medal"></i></div>
@@ -645,7 +636,6 @@
                         </div>
                     </div>
 
-                    <!-- Silver -->
                     <div class="rank-card silver" id="rankCard2">
                         <div class="rank-card__header">
                             <div class="rank-icon"><i class="fas fa-medal"></i></div>
@@ -671,7 +661,6 @@
                         </div>
                     </div>
 
-                    <!-- Gold -->
                     <div class="rank-card gold" id="rankCard3">
                         <div class="rank-card__header">
                             <div class="rank-icon"><i class="fas fa-crown"></i></div>
@@ -697,7 +686,6 @@
                         </div>
                     </div>
 
-                    <!-- Platinum -->
                     <div class="rank-card platinum" id="rankCard4">
                         <div class="rank-card__header">
                             <div class="rank-icon"><i class="fas fa-gem"></i></div>
@@ -723,7 +711,6 @@
                         </div>
                     </div>
 
-                    <!-- Diamond -->
                     <div class="rank-card diamond" id="rankCard5">
                         <div class="rank-card__header">
                             <div class="rank-icon"><i class="fas fa-star"></i></div>
@@ -934,93 +921,8 @@
     <!-- Notification Container -->
     <div class="notification-container" id="notificationContainer"></div>
 
-    <!-- ===== MODALS - DIPINDAHKAN KE LUAR MAIN CONTENT ===== -->
-    <!-- Withdraw Modal -->
-    <div class="modal" id="withdrawModal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">
-                    <i class="fas fa-sign-out-alt"></i> Withdraw Deposit #<span id="withdrawDepositId">-</span>
-                </h3>
-                <button class="modal-close" onclick="closeModal('withdrawModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="modal-body">
-                <div class="alert alert--warning" id="withdrawWarning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Early withdrawal will incur a 30% fee!</span>
-                </div>
-                
-                <div class="info-list" style="margin-top: 1rem;">
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <span style="color: var(--text-muted);">Deposit Amount:</span>
-                        <span id="withdrawAmount" style="font-weight: 600;">0.00 USDT</span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <span style="color: var(--text-muted);">Daily ROI Rate:</span>
-                        <span id="withdrawDailyROI" style="font-weight: 600; color: var(--gold);">0.00 USDT</span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <span style="color: var(--text-muted);">Withdrawal Fee:</span>
-                        <span id="withdrawFee" style="font-weight: 600; color: var(--red);">0.00 USDT (0%)</span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0;">
-                        <span style="color: var(--text-muted);">You Receive (Capital):</span>
-                        <span id="withdrawReceive" style="font-weight: 600; color: var(--green-accent);">0.00 USDT</span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 0.5rem;">
-                        <span style="color: var(--text-muted);">Pending ROI to Claim:</span>
-                        <span style="color: var(--green-accent);">Will be claimed separately</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="modal-footer">
-                <button class="btn btn--secondary" onclick="closeModal('withdrawModal')">
-                    Cancel
-                </button>
-                <button class="btn btn--danger" onclick="confirmWithdraw(window.currentWithdrawDepositId)">
-                    <i class="fas fa-sign-out-alt"></i> Confirm Withdraw
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Claim ROI Modal -->
-    <div class="modal" id="claimROIModal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">
-                    <i class="fas fa-hand-holding-usd"></i> Claim ROI for Deposit #<span id="claimROIDepositId">-</span>
-                </h3>
-                <button class="modal-close" onclick="closeModal('claimROIModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="modal-body">
-                <div style="text-align: center; padding: 2rem; background: rgba(124, 179, 66, 0.1); border-radius: var(--radius-lg); margin-bottom: 1rem;">
-                    <div style="font-size: 2.5rem; font-weight: 700; color: var(--green-accent); margin-bottom: 0.5rem;" id="claimROIAmount">0.00 USDT</div>
-                    <div style="color: var(--text-muted);">Available to claim</div>
-                </div>
-            </div>
-            
-            <div class="modal-footer">
-                <button class="btn btn--secondary" onclick="closeModal('claimROIModal')">
-                    Cancel
-                </button>
-                <button class="btn btn--success" onclick="confirmClaimROI(window.currentClaimDepositId)">
-                    <i class="fas fa-check"></i> Confirm Claim
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Modal Container (akan diisi oleh JS) -->
+    <div id="modalContainer"></div>
 
     <!-- Custom JavaScript -->
     <script src="js/config.js"></script>
